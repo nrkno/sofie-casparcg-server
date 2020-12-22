@@ -231,7 +231,8 @@ std::shared_ptr<void> add_preformatted_line_sink(std::function<void(std::string 
 
 	typedef boost::log::sinks::synchronous_sink<sink_backend> sink_type;
 
-	auto sink = boost::make_shared<sink_type>(std::move(formatted_line_sink));
+	auto backend = boost::make_shared<sink_backend>(std::move(formatted_line_sink));
+	auto sink = boost::make_shared<sink_type>(std::move(backend));
 	bool print_all_characters = true;
 
 	sink->set_formatter(boost::bind(&my_formatter<boost::log::formatting_ostream>, print_all_characters, _1, _2));
