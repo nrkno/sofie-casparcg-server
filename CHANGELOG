@@ -5,6 +5,8 @@ CasparCG 2.1.13 NRK (w.r.t 2.1.12 NRK)
 
   o Backport TBB update 
 
+  o Fix linux build
+
 CasparCG 2.1.12 NRK (w.r.t 2.1.11 NRK)
 ==========================================
 
