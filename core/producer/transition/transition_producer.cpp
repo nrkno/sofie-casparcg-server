@@ -104,7 +104,9 @@ public:
 		});
 
         if (dest_ == draw_frame::empty() || dest_ == draw_frame{}) {
-            return source_;
+            auto res = source_;
+            source_  = draw_frame::empty();
+            return res;
         }
 
 		if (info_.duration == 0) {
