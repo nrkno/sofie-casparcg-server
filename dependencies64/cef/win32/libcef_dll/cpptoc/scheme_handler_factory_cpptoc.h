@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=d61dec9b5cb1e46c0955b359fb784e87142ce4ee$
+// $hash=50876172d9b7287097ba325cabd3376a2ae2c516$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_SCHEME_HANDLER_FACTORY_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefSchemeHandlerFactoryCppToC
                                  cef_scheme_handler_factory_t> {
  public:
   CefSchemeHandlerFactoryCppToC();
+  virtual ~CefSchemeHandlerFactoryCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_SCHEME_HANDLER_FACTORY_CPPTOC_H_

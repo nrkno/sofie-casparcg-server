@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Marshall A. Greenblatt. All rights reserved.
+// Copyright (c) 2021 Marshall A. Greenblatt. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@
 // by hand. See the translator.README.txt file in the tools directory for
 // more information.
 //
-// $hash=9c9e2d87b54564137f970081f25d09157c5903d2$
+// $hash=aefb3b63aba8f5df6ab6dc11e2029820c75c36cf$
 //
 
 #ifndef CEF_INCLUDE_CAPI_CEF_SSL_INFO_CAPI_H_
@@ -71,15 +71,9 @@ typedef struct _cef_sslinfo_t {
 } cef_sslinfo_t;
 
 ///
-// Returns true (1) if the certificate status has any error, major or minor.
+// Returns true (1) if the certificate status represents an error.
 ///
 CEF_EXPORT int cef_is_cert_status_error(cef_cert_status_t status);
-
-///
-// Returns true (1) if the certificate status represents only minor errors (e.g.
-// failure to verify certificate revocation).
-///
-CEF_EXPORT int cef_is_cert_status_minor_error(cef_cert_status_t status);
 
 #ifdef __cplusplus
 }

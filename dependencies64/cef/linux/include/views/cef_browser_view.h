@@ -51,14 +51,19 @@ class CefBrowserView : public CefView {
  public:
   ///
   // Create a new BrowserView. The underlying CefBrowser will not be created
-  // until this view is added to the views hierarchy.
+  // until this view is added to the views hierarchy. The optional |extra_info|
+  // parameter provides an opportunity to specify extra information specific
+  // to the created browser that will be passed to
+  // CefRenderProcessHandler::OnBrowserCreated() in the render process.
   ///
   /*--cef(optional_param=client,optional_param=url,
-          optional_param=request_context,optional_param=delegate)--*/
+          optional_param=request_context,optional_param=delegate,
+          optional_param=extra_info)--*/
   static CefRefPtr<CefBrowserView> CreateBrowserView(
       CefRefPtr<CefClient> client,
       const CefString& url,
       const CefBrowserSettings& settings,
+      CefRefPtr<CefDictionaryValue> extra_info,
       CefRefPtr<CefRequestContext> request_context,
       CefRefPtr<CefBrowserViewDelegate> delegate);
 
@@ -74,6 +79,17 @@ class CefBrowserView : public CefView {
   ///
   /*--cef()--*/
   virtual CefRefPtr<CefBrowser> GetBrowser() = 0;
+
+  ///
+  // Returns the Chrome toolbar associated with this BrowserView. Only supported
+  // when using the Chrome runtime. The CefBrowserViewDelegate::
+  // GetChromeToolbarType() method must return a value other than
+  // CEF_CTT_NONE and the toolbar will not be available until after this
+  // BrowserView is added to a CefWindow and CefViewDelegate::OnWindowChanged()
+  // has been called.
+  ///
+  /*--cef()--*/
+  virtual CefRefPtr<CefView> GetChromeToolbar() = 0;
 
   ///
   // Sets whether accelerators registered with CefWindow::SetAccelerator are

@@ -40,25 +40,33 @@
 
 #include <vector>
 #include "include/cef_base.h"
+#include "include/cef_devtools_message_observer.h"
 #include "include/cef_drag_data.h"
 #include "include/cef_frame.h"
 #include "include/cef_image.h"
 #include "include/cef_navigation_entry.h"
-#include "include/cef_process_message.h"
+#include "include/cef_registration.h"
 #include "include/cef_request_context.h"
 
 class CefBrowserHost;
 class CefClient;
 
 ///
-// Class used to represent a browser window. When used in the browser process
-// the methods of this class may be called on any thread unless otherwise
-// indicated in the comments. When used in the render process the methods of
-// this class may only be called on the main thread.
+// Class used to represent a browser. When used in the browser process the
+// methods of this class may be called on any thread unless otherwise indicated
+// in the comments. When used in the render process the methods of this class
+// may only be called on the main thread.
 ///
 /*--cef(source=library)--*/
 class CefBrowser : public virtual CefBaseRefCounted {
  public:
+  ///
+  // True if this object is currently valid. This will return false after
+  // CefLifeSpanHandler::OnBeforeClose is called.
+  ///
+  /*--cef()--*/
+  virtual bool IsValid() = 0;
+
   ///
   // Returns the browser host object. This method can only be called in the
   // browser process.
@@ -129,7 +137,7 @@ class CefBrowser : public virtual CefBaseRefCounted {
   virtual bool IsSame(CefRefPtr<CefBrowser> that) = 0;
 
   ///
-  // Returns true if the window is a popup window.
+  // Returns true if the browser is a popup.
   ///
   /*--cef()--*/
   virtual bool IsPopup() = 0;
@@ -141,13 +149,19 @@ class CefBrowser : public virtual CefBaseRefCounted {
   virtual bool HasDocument() = 0;
 
   ///
-  // Returns the main (top-level) frame for the browser window.
+  // Returns the main (top-level) frame for the browser. In the browser process
+  // this will return a valid object until after
+  // CefLifeSpanHandler::OnBeforeClose is called. In the renderer process this
+  // will return NULL if the main frame is hosted in a different renderer
+  // process (e.g. for cross-origin sub-frames). The main frame object will
+  // change during cross-origin navigation or re-navigation after renderer
+  // process termination (due to crashes, etc).
   ///
   /*--cef()--*/
   virtual CefRefPtr<CefFrame> GetMainFrame() = 0;
 
   ///
-  // Returns the focused frame for the browser window.
+  // Returns the focused frame for the browser.
   ///
   /*--cef()--*/
   virtual CefRefPtr<CefFrame> GetFocusedFrame() = 0;
@@ -181,14 +195,6 @@ class CefBrowser : public virtual CefBaseRefCounted {
   ///
   /*--cef()--*/
   virtual void GetFrameNames(std::vector<CefString>& names) = 0;
-
-  ///
-  // Send a message to the specified |target_process|. Returns true if the
-  // message was sent successfully.
-  ///
-  /*--cef()--*/
-  virtual bool SendProcessMessage(CefProcessId target_process,
-                                  CefRefPtr<CefProcessMessage> message) = 0;
 };
 
 ///
@@ -268,10 +274,9 @@ class CefDownloadImageCallback : public virtual CefBaseRefCounted {
 };
 
 ///
-// Class used to represent the browser process aspects of a browser window. The
-// methods of this class can only be called in the browser process. They may be
-// called on any thread in that process unless otherwise indicated in the
-// comments.
+// Class used to represent the browser process aspects of a browser. The methods
+// of this class can only be called in the browser process. They may be called
+// on any thread in that process unless otherwise indicated in the comments.
 ///
 /*--cef(source=library)--*/
 class CefBrowserHost : public virtual CefBaseRefCounted {
@@ -282,33 +287,40 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
   typedef cef_paint_element_type_t PaintElementType;
 
   ///
-  // Create a new browser window using the window parameters specified by
-  // |windowInfo|. All values will be copied internally and the actual window
-  // will be created on the UI thread. If |request_context| is empty the
-  // global request context will be used. This method can be called on any
-  // browser process thread and will not block.
+  // Create a new browser using the window parameters specified by |windowInfo|.
+  // All values will be copied internally and the actual window (if any) will be
+  // created on the UI thread. If |request_context| is empty the global request
+  // context will be used. This method can be called on any browser process
+  // thread and will not block. The optional |extra_info| parameter provides an
+  // opportunity to specify extra information specific to the created browser
+  // that will be passed to CefRenderProcessHandler::OnBrowserCreated() in the
+  // render process.
   ///
   /*--cef(optional_param=client,optional_param=url,
-          optional_param=request_context)--*/
+          optional_param=request_context,optional_param=extra_info)--*/
   static bool CreateBrowser(const CefWindowInfo& windowInfo,
                             CefRefPtr<CefClient> client,
                             const CefString& url,
                             const CefBrowserSettings& settings,
+                            CefRefPtr<CefDictionaryValue> extra_info,
                             CefRefPtr<CefRequestContext> request_context);
 
   ///
-  // Create a new browser window using the window parameters specified by
-  // |windowInfo|. If |request_context| is empty the global request context
-  // will be used. This method can only be called on the browser process UI
-  // thread.
+  // Create a new browser using the window parameters specified by |windowInfo|.
+  // If |request_context| is empty the global request context will be used. This
+  // method can only be called on the browser process UI thread. The optional
+  // |extra_info| parameter provides an opportunity to specify extra information
+  // specific to the created browser that will be passed to
+  // CefRenderProcessHandler::OnBrowserCreated() in the render process.
   ///
   /*--cef(optional_param=client,optional_param=url,
-          optional_param=request_context)--*/
+          optional_param=request_context,optional_param=extra_info)--*/
   static CefRefPtr<CefBrowser> CreateBrowserSync(
       const CefWindowInfo& windowInfo,
       CefRefPtr<CefClient> client,
       const CefString& url,
       const CefBrowserSettings& settings,
+      CefRefPtr<CefDictionaryValue> extra_info,
       CefRefPtr<CefRequestContext> request_context);
 
   ///
@@ -332,9 +344,9 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
 
   ///
   // Helper for closing a browser. Call this method from the top-level window
-  // close handler. Internally this calls CloseBrowser(false) if the close has
-  // not yet been initiated. This method returns false while the close is
-  // pending and true after the close has completed. See CloseBrowser() and
+  // close handler (if any). Internally this calls CloseBrowser(false) if the
+  // close has not yet been initiated. This method returns false while the close
+  // is pending and true after the close has completed. See CloseBrowser() and
   // CefLifeSpanHandler::DoClose() documentation for additional usage
   // information. This method must be called on the browser process UI thread.
   ///
@@ -348,18 +360,19 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
   virtual void SetFocus(bool focus) = 0;
 
   ///
-  // Retrieve the window handle for this browser. If this browser is wrapped in
-  // a CefBrowserView this method should be called on the browser process UI
-  // thread and it will return the handle for the top-level native window.
+  // Retrieve the window handle (if any) for this browser. If this browser is
+  // wrapped in a CefBrowserView this method should be called on the browser
+  // process UI thread and it will return the handle for the top-level native
+  // window.
   ///
   /*--cef()--*/
   virtual CefWindowHandle GetWindowHandle() = 0;
 
   ///
-  // Retrieve the window handle of the browser that opened this browser. Will
-  // return NULL for non-popup windows or if this browser is wrapped in a
-  // CefBrowserView. This method can be used in combination with custom handling
-  // of modal windows.
+  // Retrieve the window handle (if any) of the browser that opened this
+  // browser. Will return NULL for non-popup browsers or if this browser is
+  // wrapped in a CefBrowserView. This method can be used in combination with
+  // custom handling of modal windows.
   ///
   /*--cef()--*/
   virtual CefWindowHandle GetOpenerWindowHandle() = 0;
@@ -519,6 +532,69 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
   virtual bool HasDevTools() = 0;
 
   ///
+  // Send a method call message over the DevTools protocol. |message| must be a
+  // UTF8-encoded JSON dictionary that contains "id" (int), "method" (string)
+  // and "params" (dictionary, optional) values. See the DevTools protocol
+  // documentation at https://chromedevtools.github.io/devtools-protocol/ for
+  // details of supported methods and the expected "params" dictionary contents.
+  // |message| will be copied if necessary. This method will return true if
+  // called on the UI thread and the message was successfully submitted for
+  // validation, otherwise false. Validation will be applied asynchronously and
+  // any messages that fail due to formatting errors or missing parameters may
+  // be discarded without notification. Prefer ExecuteDevToolsMethod if a more
+  // structured approach to message formatting is desired.
+  //
+  // Every valid method call will result in an asynchronous method result or
+  // error message that references the sent message "id". Event messages are
+  // received while notifications are enabled (for example, between method calls
+  // for "Page.enable" and "Page.disable"). All received messages will be
+  // delivered to the observer(s) registered with AddDevToolsMessageObserver.
+  // See CefDevToolsMessageObserver::OnDevToolsMessage documentation for details
+  // of received message contents.
+  //
+  // Usage of the SendDevToolsMessage, ExecuteDevToolsMethod and
+  // AddDevToolsMessageObserver methods does not require an active DevTools
+  // front-end or remote-debugging session. Other active DevTools sessions will
+  // continue to function independently. However, any modification of global
+  // browser state by one session may not be reflected in the UI of other
+  // sessions.
+  //
+  // Communication with the DevTools front-end (when displayed) can be logged
+  // for development purposes by passing the
+  // `--devtools-protocol-log-file=<path>` command-line flag.
+  ///
+  /*--cef()--*/
+  virtual bool SendDevToolsMessage(const void* message,
+                                   size_t message_size) = 0;
+
+  ///
+  // Execute a method call over the DevTools protocol. This is a more structured
+  // version of SendDevToolsMessage. |message_id| is an incremental number that
+  // uniquely identifies the message (pass 0 to have the next number assigned
+  // automatically based on previous values). |method| is the method name.
+  // |params| are the method parameters, which may be empty. See the DevTools
+  // protocol documentation (linked above) for details of supported methods and
+  // the expected |params| dictionary contents. This method will return the
+  // assigned message ID if called on the UI thread and the message was
+  // successfully submitted for validation, otherwise 0. See the
+  // SendDevToolsMessage documentation for additional usage information.
+  ///
+  /*--cef(optional_param=params)--*/
+  virtual int ExecuteDevToolsMethod(int message_id,
+                                    const CefString& method,
+                                    CefRefPtr<CefDictionaryValue> params) = 0;
+
+  ///
+  // Add an observer for DevTools protocol messages (method results and events).
+  // The observer will remain registered until the returned Registration object
+  // is destroyed. See the SendDevToolsMessage documentation for additional
+  // usage information.
+  ///
+  /*--cef()--*/
+  virtual CefRefPtr<CefRegistration> AddDevToolsMessageObserver(
+      CefRefPtr<CefDevToolsMessageObserver> observer) = 0;
+
+  ///
   // Retrieve a snapshot of current navigation entries as values sent to the
   // specified visitor. If |current_only| is true only the current navigation
   // entry will be sent, otherwise all navigation entries will be sent.
@@ -527,18 +603,6 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
   virtual void GetNavigationEntries(
       CefRefPtr<CefNavigationEntryVisitor> visitor,
       bool current_only) = 0;
-
-  ///
-  // Set whether mouse cursor change is disabled.
-  ///
-  /*--cef()--*/
-  virtual void SetMouseCursorChangeDisabled(bool disabled) = 0;
-
-  ///
-  // Returns true if mouse cursor change is disabled.
-  ///
-  /*--cef()--*/
-  virtual bool IsMouseCursorChangeDisabled() = 0;
 
   ///
   // If a misspelled word is currently selected in an editable node calling
@@ -639,10 +703,10 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
                                    int deltaY) = 0;
 
   ///
-  // Send a focus event to the browser.
+  // Send a touch event to the browser for a windowless browser.
   ///
   /*--cef()--*/
-  virtual void SendFocusEvent(bool setFocus) = 0;
+  virtual void SendTouchEvent(const CefTouchEvent& event) = 0;
 
   ///
   // Send a capture lost event to the browser.
@@ -865,6 +929,19 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
   ///
   /*--cef()--*/
   virtual bool IsBackgroundHost() = 0;
+
+  ///
+  //  Set whether the browser's audio is muted.
+  ///
+  /*--cef()--*/
+  virtual void SetAudioMuted(bool mute) = 0;
+
+  ///
+  // Returns true if the browser's audio is muted.  This method can only be
+  // called on the UI thread.
+  ///
+  /*--cef()--*/
+  virtual bool IsAudioMuted() = 0;
 };
 
 #endif  // CEF_INCLUDE_CEF_BROWSER_H_

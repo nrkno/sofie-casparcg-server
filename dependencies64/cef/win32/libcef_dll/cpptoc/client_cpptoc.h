@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=9ac6fdead48b09acbc98b6f6fd3bbb8e194afb96$
+// $hash=add3a870eb1069fd05d8c2adae9b89a4ef559e11$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_CLIENT_CPPTOC_H_
@@ -30,6 +30,7 @@ class CefClientCppToC
     : public CefCppToCRefCounted<CefClientCppToC, CefClient, cef_client_t> {
  public:
   CefClientCppToC();
+  virtual ~CefClientCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_CLIENT_CPPTOC_H_

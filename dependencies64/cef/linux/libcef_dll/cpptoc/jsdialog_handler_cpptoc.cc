@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,12 +9,13 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=dcb4befb6077f91893895ff5ab844d1b2572278b$
+// $hash=94f71f6f646166bd1c1fe8db5e4e1c03ddcf6d75$
 //
 
 #include "libcef_dll/cpptoc/jsdialog_handler_cpptoc.h"
 #include "libcef_dll/ctocpp/browser_ctocpp.h"
 #include "libcef_dll/ctocpp/jsdialog_callback_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -29,6 +30,8 @@ jsdialog_handler_on_jsdialog(struct _cef_jsdialog_handler_t* self,
                              const cef_string_t* default_prompt_text,
                              cef_jsdialog_callback_t* callback,
                              int* suppress_message) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -72,6 +75,8 @@ jsdialog_handler_on_before_unload_dialog(struct _cef_jsdialog_handler_t* self,
                                          const cef_string_t* message_text,
                                          int is_reload,
                                          cef_jsdialog_callback_t* callback) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -99,6 +104,8 @@ jsdialog_handler_on_before_unload_dialog(struct _cef_jsdialog_handler_t* self,
 void CEF_CALLBACK
 jsdialog_handler_on_reset_dialog_state(struct _cef_jsdialog_handler_t* self,
                                        cef_browser_t* browser) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -117,6 +124,8 @@ jsdialog_handler_on_reset_dialog_state(struct _cef_jsdialog_handler_t* self,
 void CEF_CALLBACK
 jsdialog_handler_on_dialog_closed(struct _cef_jsdialog_handler_t* self,
                                   cef_browser_t* browser) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -144,6 +153,12 @@ CefJSDialogHandlerCppToC::CefJSDialogHandlerCppToC() {
   GetStruct()->on_dialog_closed = jsdialog_handler_on_dialog_closed;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefJSDialogHandlerCppToC::~CefJSDialogHandlerCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefJSDialogHandler> CefCppToCRefCounted<
     CefJSDialogHandlerCppToC,
@@ -151,16 +166,8 @@ CefRefPtr<CefJSDialogHandler> CefCppToCRefCounted<
     cef_jsdialog_handler_t>::UnwrapDerived(CefWrapperType type,
                                            cef_jsdialog_handler_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefJSDialogHandlerCppToC,
-                                         CefJSDialogHandler,
-                                         cef_jsdialog_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefJSDialogHandlerCppToC,

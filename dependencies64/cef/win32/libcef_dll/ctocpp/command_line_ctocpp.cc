@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=1c498e2873d5fc44f66de6a1faa1cb786465c293$
+// $hash=531127653166c6f4b50f25669ceef0a54ec56b0d$
 //
 
 #include "libcef_dll/ctocpp/command_line_ctocpp.h"
-#include "include/cef_version.h"
+#include "include/cef_api_hash.h"
 #include "libcef_dll/transfer_util.h"
 
 // STATIC METHODS - Body may be edited by hand.
@@ -24,7 +24,7 @@ CefRefPtr<CefCommandLine> CefCommandLine::CreateCommandLine() {
   if (strcmp(api_hash, CEF_API_HASH_PLATFORM)) {
     // The libcef API hash does not match the current header API hash.
     NOTREACHED();
-    return NULL;
+    return nullptr;
   }
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
@@ -42,7 +42,7 @@ CefRefPtr<CefCommandLine> CefCommandLine::GetGlobalCommandLine() {
   if (strcmp(api_hash, CEF_API_HASH_PLATFORM)) {
     // The libcef API hash does not match the current header API hash.
     NOTREACHED();
-    return NULL;
+    return nullptr;
   }
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
@@ -88,7 +88,7 @@ NO_SANITIZE("cfi-icall")
 CefRefPtr<CefCommandLine> CefCommandLineCToCpp::Copy() {
   cef_command_line_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, copy))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -418,21 +418,17 @@ void CefCommandLineCToCpp::PrependWrapper(const CefString& wrapper) {
 
 CefCommandLineCToCpp::CefCommandLineCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefCommandLineCToCpp::~CefCommandLineCToCpp() {}
+
 template <>
 cef_command_line_t*
 CefCToCppRefCounted<CefCommandLineCToCpp, CefCommandLine, cef_command_line_t>::
     UnwrapDerived(CefWrapperType type, CefCommandLine* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefCommandLineCToCpp,
-                                         CefCommandLine,
-                                         cef_command_line_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefCommandLineCToCpp,

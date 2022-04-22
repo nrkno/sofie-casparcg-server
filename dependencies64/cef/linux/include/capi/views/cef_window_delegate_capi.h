@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Marshall A. Greenblatt. All rights reserved.
+// Copyright (c) 2021 Marshall A. Greenblatt. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@
 // by hand. See the translator.README.txt file in the tools directory for
 // more information.
 //
-// $hash=04efeb43e0b0f88bf72718652c993df220b08012$
+// $hash=839098c445b1d3203bc482fc5d1555e1f9b87646$
 //
 
 #ifndef CEF_INCLUDE_CAPI_VIEWS_CEF_WINDOW_DELEGATE_CAPI_H_
@@ -86,6 +86,25 @@ typedef struct _cef_window_delegate_t {
       struct _cef_window_t* window,
       int* is_menu,
       int* can_activate_menu);
+
+  ///
+  // Return the initial bounds for |window| in density independent pixel (DIP)
+  // coordinates. If this function returns an NULL CefRect then
+  // get_preferred_size() will be called to retrieve the size, and the window
+  // will be placed on the screen with origin (0,0). This function can be used
+  // in combination with cef_view_t::get_bounds_in_screen() to restore the
+  // previous window bounds.
+  ///
+  cef_rect_t(CEF_CALLBACK* get_initial_bounds)(
+      struct _cef_window_delegate_t* self,
+      struct _cef_window_t* window);
+
+  ///
+  // Return the initial show state for |window|.
+  ///
+  cef_show_state_t(CEF_CALLBACK* get_initial_show_state)(
+      struct _cef_window_delegate_t* self,
+      struct _cef_window_t* window);
 
   ///
   // Return true (1) if |window| should be created without a frame or title bar.

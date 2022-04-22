@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=1f45062afe711a3ee71be696f5a2d45cce8d94f8$
+// $hash=73f1e51eafb9ec8797e8f0753b33c2261c3b0e2f$
 //
 
 #include "libcef_dll/ctocpp/views/scroll_view_ctocpp.h"
@@ -20,12 +20,15 @@
 #include "libcef_dll/ctocpp/views/textfield_ctocpp.h"
 #include "libcef_dll/ctocpp/views/view_ctocpp.h"
 #include "libcef_dll/ctocpp/views/window_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // STATIC METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 CefRefPtr<CefScrollView> CefScrollView::CreateScrollView(
     CefRefPtr<CefViewDelegate> delegate) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Unverified params: delegate
@@ -42,6 +45,8 @@ CefRefPtr<CefScrollView> CefScrollView::CreateScrollView(
 
 NO_SANITIZE("cfi-icall")
 void CefScrollViewCToCpp::SetContentView(CefRefPtr<CefView> view) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_scroll_view_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, set_content_view))
     return;
@@ -59,9 +64,11 @@ void CefScrollViewCToCpp::SetContentView(CefRefPtr<CefView> view) {
 
 NO_SANITIZE("cfi-icall")
 CefRefPtr<CefView> CefScrollViewCToCpp::GetContentView() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_scroll_view_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_content_view))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -73,6 +80,8 @@ CefRefPtr<CefView> CefScrollViewCToCpp::GetContentView() {
 }
 
 NO_SANITIZE("cfi-icall") CefRect CefScrollViewCToCpp::GetVisibleContentRect() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_scroll_view_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_visible_content_rect))
     return CefRect();
@@ -87,6 +96,8 @@ NO_SANITIZE("cfi-icall") CefRect CefScrollViewCToCpp::GetVisibleContentRect() {
 }
 
 NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::HasHorizontalScrollbar() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_scroll_view_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, has_horizontal_scrollbar))
     return false;
@@ -102,6 +113,8 @@ NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::HasHorizontalScrollbar() {
 
 NO_SANITIZE("cfi-icall")
 int CefScrollViewCToCpp::GetHorizontalScrollbarHeight() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_scroll_view_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_horizontal_scrollbar_height))
     return 0;
@@ -116,6 +129,8 @@ int CefScrollViewCToCpp::GetHorizontalScrollbarHeight() {
 }
 
 NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::HasVerticalScrollbar() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_scroll_view_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, has_vertical_scrollbar))
     return false;
@@ -130,6 +145,8 @@ NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::HasVerticalScrollbar() {
 }
 
 NO_SANITIZE("cfi-icall") int CefScrollViewCToCpp::GetVerticalScrollbarWidth() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_scroll_view_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_vertical_scrollbar_width))
     return 0;
@@ -145,9 +162,11 @@ NO_SANITIZE("cfi-icall") int CefScrollViewCToCpp::GetVerticalScrollbarWidth() {
 
 NO_SANITIZE("cfi-icall")
 CefRefPtr<CefBrowserView> CefScrollViewCToCpp::AsBrowserView() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, as_browser_view))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -159,9 +178,11 @@ CefRefPtr<CefBrowserView> CefScrollViewCToCpp::AsBrowserView() {
 }
 
 NO_SANITIZE("cfi-icall") CefRefPtr<CefButton> CefScrollViewCToCpp::AsButton() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, as_button))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -173,9 +194,11 @@ NO_SANITIZE("cfi-icall") CefRefPtr<CefButton> CefScrollViewCToCpp::AsButton() {
 }
 
 NO_SANITIZE("cfi-icall") CefRefPtr<CefPanel> CefScrollViewCToCpp::AsPanel() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, as_panel))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -188,9 +211,11 @@ NO_SANITIZE("cfi-icall") CefRefPtr<CefPanel> CefScrollViewCToCpp::AsPanel() {
 
 NO_SANITIZE("cfi-icall")
 CefRefPtr<CefScrollView> CefScrollViewCToCpp::AsScrollView() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, as_scroll_view))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -203,9 +228,11 @@ CefRefPtr<CefScrollView> CefScrollViewCToCpp::AsScrollView() {
 
 NO_SANITIZE("cfi-icall")
 CefRefPtr<CefTextfield> CefScrollViewCToCpp::AsTextfield() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, as_textfield))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -217,6 +244,8 @@ CefRefPtr<CefTextfield> CefScrollViewCToCpp::AsTextfield() {
 }
 
 NO_SANITIZE("cfi-icall") CefString CefScrollViewCToCpp::GetTypeString() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_type_string))
     return CefString();
@@ -234,6 +263,8 @@ NO_SANITIZE("cfi-icall") CefString CefScrollViewCToCpp::GetTypeString() {
 
 NO_SANITIZE("cfi-icall")
 CefString CefScrollViewCToCpp::ToString(bool include_children) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, to_string))
     return CefString();
@@ -250,6 +281,8 @@ CefString CefScrollViewCToCpp::ToString(bool include_children) {
 }
 
 NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsValid() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, is_valid))
     return false;
@@ -264,6 +297,8 @@ NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsValid() {
 }
 
 NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsAttached() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, is_attached))
     return false;
@@ -279,6 +314,8 @@ NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsAttached() {
 
 NO_SANITIZE("cfi-icall")
 bool CefScrollViewCToCpp::IsSame(CefRefPtr<CefView> that) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, is_same))
     return false;
@@ -299,9 +336,11 @@ bool CefScrollViewCToCpp::IsSame(CefRefPtr<CefView> that) {
 
 NO_SANITIZE("cfi-icall")
 CefRefPtr<CefViewDelegate> CefScrollViewCToCpp::GetDelegate() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_delegate))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -313,9 +352,11 @@ CefRefPtr<CefViewDelegate> CefScrollViewCToCpp::GetDelegate() {
 }
 
 NO_SANITIZE("cfi-icall") CefRefPtr<CefWindow> CefScrollViewCToCpp::GetWindow() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_window))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -327,6 +368,8 @@ NO_SANITIZE("cfi-icall") CefRefPtr<CefWindow> CefScrollViewCToCpp::GetWindow() {
 }
 
 NO_SANITIZE("cfi-icall") int CefScrollViewCToCpp::GetID() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_id))
     return 0;
@@ -341,6 +384,8 @@ NO_SANITIZE("cfi-icall") int CefScrollViewCToCpp::GetID() {
 }
 
 NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::SetID(int id) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, set_id))
     return;
@@ -352,6 +397,8 @@ NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::SetID(int id) {
 }
 
 NO_SANITIZE("cfi-icall") int CefScrollViewCToCpp::GetGroupID() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_group_id))
     return 0;
@@ -366,6 +413,8 @@ NO_SANITIZE("cfi-icall") int CefScrollViewCToCpp::GetGroupID() {
 }
 
 NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::SetGroupID(int group_id) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, set_group_id))
     return;
@@ -378,9 +427,11 @@ NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::SetGroupID(int group_id) {
 
 NO_SANITIZE("cfi-icall")
 CefRefPtr<CefView> CefScrollViewCToCpp::GetParentView() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_parent_view))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -393,9 +444,11 @@ CefRefPtr<CefView> CefScrollViewCToCpp::GetParentView() {
 
 NO_SANITIZE("cfi-icall")
 CefRefPtr<CefView> CefScrollViewCToCpp::GetViewForID(int id) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_view_for_id))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -408,6 +461,8 @@ CefRefPtr<CefView> CefScrollViewCToCpp::GetViewForID(int id) {
 
 NO_SANITIZE("cfi-icall")
 void CefScrollViewCToCpp::SetBounds(const CefRect& bounds) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, set_bounds))
     return;
@@ -419,6 +474,8 @@ void CefScrollViewCToCpp::SetBounds(const CefRect& bounds) {
 }
 
 NO_SANITIZE("cfi-icall") CefRect CefScrollViewCToCpp::GetBounds() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_bounds))
     return CefRect();
@@ -433,6 +490,8 @@ NO_SANITIZE("cfi-icall") CefRect CefScrollViewCToCpp::GetBounds() {
 }
 
 NO_SANITIZE("cfi-icall") CefRect CefScrollViewCToCpp::GetBoundsInScreen() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_bounds_in_screen))
     return CefRect();
@@ -448,6 +507,8 @@ NO_SANITIZE("cfi-icall") CefRect CefScrollViewCToCpp::GetBoundsInScreen() {
 
 NO_SANITIZE("cfi-icall")
 void CefScrollViewCToCpp::SetSize(const CefSize& size) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, set_size))
     return;
@@ -459,6 +520,8 @@ void CefScrollViewCToCpp::SetSize(const CefSize& size) {
 }
 
 NO_SANITIZE("cfi-icall") CefSize CefScrollViewCToCpp::GetSize() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_size))
     return CefSize();
@@ -474,6 +537,8 @@ NO_SANITIZE("cfi-icall") CefSize CefScrollViewCToCpp::GetSize() {
 
 NO_SANITIZE("cfi-icall")
 void CefScrollViewCToCpp::SetPosition(const CefPoint& position) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, set_position))
     return;
@@ -485,6 +550,8 @@ void CefScrollViewCToCpp::SetPosition(const CefPoint& position) {
 }
 
 NO_SANITIZE("cfi-icall") CefPoint CefScrollViewCToCpp::GetPosition() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_position))
     return CefPoint();
@@ -498,7 +565,39 @@ NO_SANITIZE("cfi-icall") CefPoint CefScrollViewCToCpp::GetPosition() {
   return _retval;
 }
 
+NO_SANITIZE("cfi-icall")
+void CefScrollViewCToCpp::SetInsets(const CefInsets& insets) {
+  shutdown_checker::AssertNotShutdown();
+
+  cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
+  if (CEF_MEMBER_MISSING(_struct, set_insets))
+    return;
+
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  // Execute
+  _struct->set_insets(_struct, &insets);
+}
+
+NO_SANITIZE("cfi-icall") CefInsets CefScrollViewCToCpp::GetInsets() {
+  shutdown_checker::AssertNotShutdown();
+
+  cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
+  if (CEF_MEMBER_MISSING(_struct, get_insets))
+    return CefInsets();
+
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  // Execute
+  cef_insets_t _retval = _struct->get_insets(_struct);
+
+  // Return type: simple
+  return _retval;
+}
+
 NO_SANITIZE("cfi-icall") CefSize CefScrollViewCToCpp::GetPreferredSize() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_preferred_size))
     return CefSize();
@@ -513,6 +612,8 @@ NO_SANITIZE("cfi-icall") CefSize CefScrollViewCToCpp::GetPreferredSize() {
 }
 
 NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::SizeToPreferredSize() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, size_to_preferred_size))
     return;
@@ -524,6 +625,8 @@ NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::SizeToPreferredSize() {
 }
 
 NO_SANITIZE("cfi-icall") CefSize CefScrollViewCToCpp::GetMinimumSize() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_minimum_size))
     return CefSize();
@@ -538,6 +641,8 @@ NO_SANITIZE("cfi-icall") CefSize CefScrollViewCToCpp::GetMinimumSize() {
 }
 
 NO_SANITIZE("cfi-icall") CefSize CefScrollViewCToCpp::GetMaximumSize() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_maximum_size))
     return CefSize();
@@ -552,6 +657,8 @@ NO_SANITIZE("cfi-icall") CefSize CefScrollViewCToCpp::GetMaximumSize() {
 }
 
 NO_SANITIZE("cfi-icall") int CefScrollViewCToCpp::GetHeightForWidth(int width) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_height_for_width))
     return 0;
@@ -566,6 +673,8 @@ NO_SANITIZE("cfi-icall") int CefScrollViewCToCpp::GetHeightForWidth(int width) {
 }
 
 NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::InvalidateLayout() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, invalidate_layout))
     return;
@@ -577,6 +686,8 @@ NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::InvalidateLayout() {
 }
 
 NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::SetVisible(bool visible) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, set_visible))
     return;
@@ -588,6 +699,8 @@ NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::SetVisible(bool visible) {
 }
 
 NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsVisible() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, is_visible))
     return false;
@@ -602,6 +715,8 @@ NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsVisible() {
 }
 
 NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsDrawn() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, is_drawn))
     return false;
@@ -616,6 +731,8 @@ NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsDrawn() {
 }
 
 NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::SetEnabled(bool enabled) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, set_enabled))
     return;
@@ -627,6 +744,8 @@ NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::SetEnabled(bool enabled) {
 }
 
 NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsEnabled() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, is_enabled))
     return false;
@@ -642,6 +761,8 @@ NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsEnabled() {
 
 NO_SANITIZE("cfi-icall")
 void CefScrollViewCToCpp::SetFocusable(bool focusable) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, set_focusable))
     return;
@@ -653,6 +774,8 @@ void CefScrollViewCToCpp::SetFocusable(bool focusable) {
 }
 
 NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsFocusable() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, is_focusable))
     return false;
@@ -667,6 +790,8 @@ NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsFocusable() {
 }
 
 NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsAccessibilityFocusable() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, is_accessibility_focusable))
     return false;
@@ -681,6 +806,8 @@ NO_SANITIZE("cfi-icall") bool CefScrollViewCToCpp::IsAccessibilityFocusable() {
 }
 
 NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::RequestFocus() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, request_focus))
     return;
@@ -693,6 +820,8 @@ NO_SANITIZE("cfi-icall") void CefScrollViewCToCpp::RequestFocus() {
 
 NO_SANITIZE("cfi-icall")
 void CefScrollViewCToCpp::SetBackgroundColor(cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, set_background_color))
     return;
@@ -704,6 +833,8 @@ void CefScrollViewCToCpp::SetBackgroundColor(cef_color_t color) {
 }
 
 NO_SANITIZE("cfi-icall") cef_color_t CefScrollViewCToCpp::GetBackgroundColor() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_background_color))
     return 0;
@@ -719,6 +850,8 @@ NO_SANITIZE("cfi-icall") cef_color_t CefScrollViewCToCpp::GetBackgroundColor() {
 
 NO_SANITIZE("cfi-icall")
 bool CefScrollViewCToCpp::ConvertPointToScreen(CefPoint& point) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, convert_point_to_screen))
     return false;
@@ -734,6 +867,8 @@ bool CefScrollViewCToCpp::ConvertPointToScreen(CefPoint& point) {
 
 NO_SANITIZE("cfi-icall")
 bool CefScrollViewCToCpp::ConvertPointFromScreen(CefPoint& point) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, convert_point_from_screen))
     return false;
@@ -749,6 +884,8 @@ bool CefScrollViewCToCpp::ConvertPointFromScreen(CefPoint& point) {
 
 NO_SANITIZE("cfi-icall")
 bool CefScrollViewCToCpp::ConvertPointToWindow(CefPoint& point) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, convert_point_to_window))
     return false;
@@ -764,6 +901,8 @@ bool CefScrollViewCToCpp::ConvertPointToWindow(CefPoint& point) {
 
 NO_SANITIZE("cfi-icall")
 bool CefScrollViewCToCpp::ConvertPointFromWindow(CefPoint& point) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, convert_point_from_window))
     return false;
@@ -780,6 +919,8 @@ bool CefScrollViewCToCpp::ConvertPointFromWindow(CefPoint& point) {
 NO_SANITIZE("cfi-icall")
 bool CefScrollViewCToCpp::ConvertPointToView(CefRefPtr<CefView> view,
                                              CefPoint& point) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, convert_point_to_view))
     return false;
@@ -802,6 +943,8 @@ bool CefScrollViewCToCpp::ConvertPointToView(CefRefPtr<CefView> view,
 NO_SANITIZE("cfi-icall")
 bool CefScrollViewCToCpp::ConvertPointFromView(CefRefPtr<CefView> view,
                                                CefPoint& point) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_t* _struct = reinterpret_cast<cef_view_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, convert_point_from_view))
     return false;
@@ -825,20 +968,19 @@ bool CefScrollViewCToCpp::ConvertPointFromView(CefRefPtr<CefView> view,
 
 CefScrollViewCToCpp::CefScrollViewCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefScrollViewCToCpp::~CefScrollViewCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_scroll_view_t*
 CefCToCppRefCounted<CefScrollViewCToCpp, CefScrollView, cef_scroll_view_t>::
     UnwrapDerived(CefWrapperType type, CefScrollView* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCToCppRefCounted<CefScrollViewCToCpp, CefScrollView, cef_scroll_view_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefScrollViewCToCpp,

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=f6af5e3879234dba1c2546549681a930733917c8$
+// $hash=a19601577d6fbbb47df32d544cbfe72f1691447f$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_TEST_TRANSLATOR_TEST_REF_PTR_LIBRARY_CHILD_CHILD_CTOCPP_H_
@@ -33,18 +33,19 @@ class CefTranslatorTestRefPtrLibraryChildChildCToCpp
           cef_translator_test_ref_ptr_library_child_child_t> {
  public:
   CefTranslatorTestRefPtrLibraryChildChildCToCpp();
+  virtual ~CefTranslatorTestRefPtrLibraryChildChildCToCpp();
 
   // CefTranslatorTestRefPtrLibraryChildChild methods.
-  int GetOtherOtherValue() OVERRIDE;
-  void SetOtherOtherValue(int value) OVERRIDE;
+  int GetOtherOtherValue() override;
+  void SetOtherOtherValue(int value) override;
 
   // CefTranslatorTestRefPtrLibraryChild methods.
-  int GetOtherValue() OVERRIDE;
-  void SetOtherValue(int value) OVERRIDE;
+  int GetOtherValue() override;
+  void SetOtherValue(int value) override;
 
   // CefTranslatorTestRefPtrLibrary methods.
-  int GetValue() OVERRIDE;
-  void SetValue(int value) OVERRIDE;
+  int GetValue() override;
+  void SetValue(int value) override;
 };
 
 #endif  // CEF_LIBCEF_DLL_CTOCPP_TEST_TRANSLATOR_TEST_REF_PTR_LIBRARY_CHILD_CHILD_CTOCPP_H_

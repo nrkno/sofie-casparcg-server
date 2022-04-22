@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Marshall A. Greenblatt. All rights reserved.
+// Copyright (c) 2021 Marshall A. Greenblatt. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@
 // by hand. See the translator.README.txt file in the tools directory for
 // more information.
 //
-// $hash=540c73b297f3b0843058881c5a9a7433dc346fd2$
+// $hash=3ecebd6b30bb8fb837e062eacd021c1a1ff3620a$
 //
 
 #ifndef CEF_INCLUDE_CAPI_CEF_COMMAND_LINE_CAPI_H_
@@ -53,8 +53,9 @@ extern "C" {
 // optionally have a value specified using the '=' delimiter (e.g.
 // "-switch=value"). An argument of "--" will terminate switch parsing with all
 // subsequent tokens, regardless of prefix, being interpreted as non-switch
-// arguments. Switch names are considered case-insensitive. This structure can
-// be used before cef_initialize() is called.
+// arguments. Switch names should be lowercase ASCII and will be converted to
+// such if necessary. Switch values will retain the original case and UTF8
+// encoding. This structure can be used before cef_initialize() is called.
 ///
 typedef struct _cef_command_line_t {
   ///

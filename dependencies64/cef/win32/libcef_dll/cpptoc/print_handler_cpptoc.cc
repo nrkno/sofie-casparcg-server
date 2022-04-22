@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=684a87e946ab4d8739be2ce0152b2cfe68f42efc$
+// $hash=15d1e044a5bc40ca25c72f070a9b996907c4c0cb$
 //
 
 #include "libcef_dll/cpptoc/print_handler_cpptoc.h"
@@ -17,6 +17,7 @@
 #include "libcef_dll/ctocpp/print_dialog_callback_ctocpp.h"
 #include "libcef_dll/ctocpp/print_job_callback_ctocpp.h"
 #include "libcef_dll/ctocpp/print_settings_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -25,6 +26,8 @@ namespace {
 void CEF_CALLBACK
 print_handler_on_print_start(struct _cef_print_handler_t* self,
                              cef_browser_t* browser) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -45,6 +48,8 @@ print_handler_on_print_settings(struct _cef_print_handler_t* self,
                                 cef_browser_t* browser,
                                 struct _cef_print_settings_t* settings,
                                 int get_defaults) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -70,6 +75,8 @@ print_handler_on_print_dialog(struct _cef_print_handler_t* self,
                               cef_browser_t* browser,
                               int has_selection,
                               cef_print_dialog_callback_t* callback) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -99,6 +106,8 @@ print_handler_on_print_job(struct _cef_print_handler_t* self,
                            const cef_string_t* document_name,
                            const cef_string_t* pdf_file_path,
                            cef_print_job_callback_t* callback) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -133,6 +142,8 @@ print_handler_on_print_job(struct _cef_print_handler_t* self,
 void CEF_CALLBACK
 print_handler_on_print_reset(struct _cef_print_handler_t* self,
                              cef_browser_t* browser) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -150,16 +161,23 @@ print_handler_on_print_reset(struct _cef_print_handler_t* self,
 
 cef_size_t CEF_CALLBACK
 print_handler_get_pdf_paper_size(struct _cef_print_handler_t* self,
+                                 cef_browser_t* browser,
                                  int device_units_per_inch) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
   if (!self)
     return CefSize();
+  // Verify param: browser; type: refptr_diff
+  DCHECK(browser);
+  if (!browser)
+    return CefSize();
 
   // Execute
-  cef_size_t _retval =
-      CefPrintHandlerCppToC::Get(self)->GetPdfPaperSize(device_units_per_inch);
+  cef_size_t _retval = CefPrintHandlerCppToC::Get(self)->GetPdfPaperSize(
+      CefBrowserCToCpp::Wrap(browser), device_units_per_inch);
 
   // Return type: simple
   return _retval;
@@ -178,6 +196,12 @@ CefPrintHandlerCppToC::CefPrintHandlerCppToC() {
   GetStruct()->get_pdf_paper_size = print_handler_get_pdf_paper_size;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefPrintHandlerCppToC::~CefPrintHandlerCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefPrintHandler> CefCppToCRefCounted<
     CefPrintHandlerCppToC,
@@ -185,16 +209,8 @@ CefRefPtr<CefPrintHandler> CefCppToCRefCounted<
     cef_print_handler_t>::UnwrapDerived(CefWrapperType type,
                                         cef_print_handler_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefPrintHandlerCppToC,
-                                         CefPrintHandler,
-                                         cef_print_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefPrintHandlerCppToC,

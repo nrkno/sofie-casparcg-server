@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,12 +9,13 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=ce1d1ccd00d0dd6e9317ffc0d79b058ba591c459$
+// $hash=9c22ccd70661c2c23bc5bbb6f80f4b04d42c90fe$
 //
 
 #include "libcef_dll/cpptoc/views/textfield_delegate_cpptoc.h"
 #include "libcef_dll/ctocpp/views/textfield_ctocpp.h"
 #include "libcef_dll/ctocpp/views/view_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -24,6 +25,8 @@ int CEF_CALLBACK
 textfield_delegate_on_key_event(struct _cef_textfield_delegate_t* self,
                                 cef_textfield_t* textfield,
                                 const struct _cef_key_event_t* event) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -54,6 +57,8 @@ textfield_delegate_on_key_event(struct _cef_textfield_delegate_t* self,
 void CEF_CALLBACK
 textfield_delegate_on_after_user_action(struct _cef_textfield_delegate_t* self,
                                         cef_textfield_t* textfield) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -72,6 +77,8 @@ textfield_delegate_on_after_user_action(struct _cef_textfield_delegate_t* self,
 cef_size_t CEF_CALLBACK
 textfield_delegate_get_preferred_size(struct _cef_view_delegate_t* self,
                                       cef_view_t* view) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -94,6 +101,8 @@ textfield_delegate_get_preferred_size(struct _cef_view_delegate_t* self,
 cef_size_t CEF_CALLBACK
 textfield_delegate_get_minimum_size(struct _cef_view_delegate_t* self,
                                     cef_view_t* view) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -116,6 +125,8 @@ textfield_delegate_get_minimum_size(struct _cef_view_delegate_t* self,
 cef_size_t CEF_CALLBACK
 textfield_delegate_get_maximum_size(struct _cef_view_delegate_t* self,
                                     cef_view_t* view) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -139,6 +150,8 @@ int CEF_CALLBACK
 textfield_delegate_get_height_for_width(struct _cef_view_delegate_t* self,
                                         cef_view_t* view,
                                         int width) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -163,6 +176,8 @@ textfield_delegate_on_parent_view_changed(struct _cef_view_delegate_t* self,
                                           cef_view_t* view,
                                           int added,
                                           cef_view_t* parent) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -189,6 +204,8 @@ textfield_delegate_on_child_view_changed(struct _cef_view_delegate_t* self,
                                          cef_view_t* view,
                                          int added,
                                          cef_view_t* child) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -210,8 +227,61 @@ textfield_delegate_on_child_view_changed(struct _cef_view_delegate_t* self,
                            CefViewCToCpp::Wrap(child));
 }
 
+void CEF_CALLBACK
+textfield_delegate_on_window_changed(struct _cef_view_delegate_t* self,
+                                     cef_view_t* view,
+                                     int added) {
+  shutdown_checker::AssertNotShutdown();
+
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return;
+  // Verify param: view; type: refptr_diff
+  DCHECK(view);
+  if (!view)
+    return;
+
+  // Execute
+  CefTextfieldDelegateCppToC::Get(
+      reinterpret_cast<cef_textfield_delegate_t*>(self))
+      ->OnWindowChanged(CefViewCToCpp::Wrap(view), added ? true : false);
+}
+
+void CEF_CALLBACK
+textfield_delegate_on_layout_changed(struct _cef_view_delegate_t* self,
+                                     cef_view_t* view,
+                                     const cef_rect_t* new_bounds) {
+  shutdown_checker::AssertNotShutdown();
+
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return;
+  // Verify param: view; type: refptr_diff
+  DCHECK(view);
+  if (!view)
+    return;
+  // Verify param: new_bounds; type: simple_byref_const
+  DCHECK(new_bounds);
+  if (!new_bounds)
+    return;
+
+  // Translate param: new_bounds; type: simple_byref_const
+  CefRect new_boundsVal = new_bounds ? *new_bounds : CefRect();
+
+  // Execute
+  CefTextfieldDelegateCppToC::Get(
+      reinterpret_cast<cef_textfield_delegate_t*>(self))
+      ->OnLayoutChanged(CefViewCToCpp::Wrap(view), new_boundsVal);
+}
+
 void CEF_CALLBACK textfield_delegate_on_focus(struct _cef_view_delegate_t* self,
                                               cef_view_t* view) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -230,6 +300,8 @@ void CEF_CALLBACK textfield_delegate_on_focus(struct _cef_view_delegate_t* self,
 
 void CEF_CALLBACK textfield_delegate_on_blur(struct _cef_view_delegate_t* self,
                                              cef_view_t* view) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -262,8 +334,16 @@ CefTextfieldDelegateCppToC::CefTextfieldDelegateCppToC() {
       textfield_delegate_on_parent_view_changed;
   GetStruct()->base.on_child_view_changed =
       textfield_delegate_on_child_view_changed;
+  GetStruct()->base.on_window_changed = textfield_delegate_on_window_changed;
+  GetStruct()->base.on_layout_changed = textfield_delegate_on_layout_changed;
   GetStruct()->base.on_focus = textfield_delegate_on_focus;
   GetStruct()->base.on_blur = textfield_delegate_on_blur;
+}
+
+// DESTRUCTOR - Do not edit by hand.
+
+CefTextfieldDelegateCppToC::~CefTextfieldDelegateCppToC() {
+  shutdown_checker::AssertNotShutdown();
 }
 
 template <>
@@ -273,16 +353,8 @@ CefRefPtr<CefTextfieldDelegate> CefCppToCRefCounted<
     cef_textfield_delegate_t>::UnwrapDerived(CefWrapperType type,
                                              cef_textfield_delegate_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefTextfieldDelegateCppToC,
-                                         CefTextfieldDelegate,
-                                         cef_textfield_delegate_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefTextfieldDelegateCppToC,

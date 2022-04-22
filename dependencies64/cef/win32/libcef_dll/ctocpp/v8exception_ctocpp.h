@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=c5c0720dbc9db9e9b5e11eedfaf6a35c7f0e602a$
+// $hash=a2b61cff85a5bf35797134b63606e4a043003f45$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_V8EXCEPTION_CTOCPP_H_
@@ -31,16 +31,17 @@ class CefV8ExceptionCToCpp : public CefCToCppRefCounted<CefV8ExceptionCToCpp,
                                                         cef_v8exception_t> {
  public:
   CefV8ExceptionCToCpp();
+  virtual ~CefV8ExceptionCToCpp();
 
   // CefV8Exception methods.
-  CefString GetMessage() OVERRIDE;
-  CefString GetSourceLine() OVERRIDE;
-  CefString GetScriptResourceName() OVERRIDE;
-  int GetLineNumber() OVERRIDE;
-  int GetStartPosition() OVERRIDE;
-  int GetEndPosition() OVERRIDE;
-  int GetStartColumn() OVERRIDE;
-  int GetEndColumn() OVERRIDE;
+  CefString GetMessage() override;
+  CefString GetSourceLine() override;
+  CefString GetScriptResourceName() override;
+  int GetLineNumber() override;
+  int GetStartPosition() override;
+  int GetEndPosition() override;
+  int GetStartColumn() override;
+  int GetEndColumn() override;
 };
 
 #endif  // CEF_LIBCEF_DLL_CTOCPP_V8EXCEPTION_CTOCPP_H_

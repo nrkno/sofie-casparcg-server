@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=9b7f62192b7558b5fa9c4677b9bfdf1fb4a6e611$
+// $hash=a3b02330389789479f880c0b333632c3c2ddf835$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_DOWNLOAD_IMAGE_CALLBACK_CPPTOC_H_
@@ -34,6 +34,7 @@ class CefDownloadImageCallbackCppToC
                                  cef_download_image_callback_t> {
  public:
   CefDownloadImageCallbackCppToC();
+  virtual ~CefDownloadImageCallbackCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_DOWNLOAD_IMAGE_CALLBACK_CPPTOC_H_

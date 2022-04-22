@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=b201e99260bd005c9821dab9e9b6148e4561cfa6$
+// $hash=dd23aa5e43b06eb8d4975d17cd61c47b77998736$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_FOCUS_HANDLER_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefFocusHandlerCppToC : public CefCppToCRefCounted<CefFocusHandlerCppToC,
                                                          cef_focus_handler_t> {
  public:
   CefFocusHandlerCppToC();
+  virtual ~CefFocusHandlerCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_FOCUS_HANDLER_CPPTOC_H_

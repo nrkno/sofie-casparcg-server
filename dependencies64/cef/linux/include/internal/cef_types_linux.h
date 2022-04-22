@@ -32,18 +32,28 @@
 #pragma once
 
 #include "include/base/cef_build.h"
+#include "include/cef_config.h"
 
 #if defined(OS_LINUX)
 
+#if defined(CEF_X11)
 typedef union _XEvent XEvent;
 typedef struct _XDisplay XDisplay;
+#endif
 
 #include "include/internal/cef_export.h"
 #include "include/internal/cef_string.h"
+#include "include/internal/cef_types_geometry.h"
 
 // Handle types.
+#if defined(CEF_X11)
 #define cef_cursor_handle_t unsigned long
 #define cef_event_handle_t XEvent*
+#else
+#define cef_cursor_handle_t void*
+#define cef_event_handle_t void*
+#endif
+
 #define cef_window_handle_t unsigned long
 
 #define kNullCursorHandle 0
@@ -58,7 +68,9 @@ extern "C" {
 // Return the singleton X11 display shared with Chromium. The display is not
 // thread-safe and must only be accessed on the browser process UI thread.
 ///
+#if defined(CEF_X11)
 CEF_EXPORT XDisplay* cef_get_xdisplay();
+#endif
 
 ///
 // Structure representing CefExecuteProcess arguments.
@@ -72,10 +84,20 @@ typedef struct _cef_main_args_t {
 // Class representing window information.
 ///
 typedef struct _cef_window_info_t {
-  unsigned int x;
-  unsigned int y;
-  unsigned int width;
-  unsigned int height;
+  ///
+  // The initial title of the window, to be set when the window is created.
+  // Some layout managers (e.g., Compiz) can look at the window title
+  // in order to decide where to place the window when it is
+  // created. When this attribute is not empty, the window title will
+  // be set before the window is mapped to the dispay. Otherwise the
+  // title will be initially empty.
+  ///
+  cef_string_t window_name;
+
+  ///
+  // Initial window bounds.
+  ///
+  cef_rect_t bounds;
 
   ///
   // Pointer for the parent window.

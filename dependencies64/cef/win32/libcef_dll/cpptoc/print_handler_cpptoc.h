@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=5570a3bae3b8b0dc9ead66a6ba86c76f11fe6872$
+// $hash=525179c2c2bf4727855e0fa8610fba5ec050b19d$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_PRINT_HANDLER_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefPrintHandlerCppToC : public CefCppToCRefCounted<CefPrintHandlerCppToC,
                                                          cef_print_handler_t> {
  public:
   CefPrintHandlerCppToC();
+  virtual ~CefPrintHandlerCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_PRINT_HANDLER_CPPTOC_H_

@@ -4,8 +4,8 @@
 
 # Append platform specific sources to a list of sources.
 macro(LIBCEF_APPEND_PLATFORM_SOURCES name_of_list)
-  if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin" AND ${name_of_list}_MACOSX)
-    list(APPEND ${name_of_list} ${${name_of_list}_MACOSX})
+  if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin" AND ${name_of_list}_MAC)
+    list(APPEND ${name_of_list} ${${name_of_list}_MAC})
   endif()
   if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND ${name_of_list}_LINUX)
     list(APPEND ${name_of_list} ${${name_of_list}_LINUX})
@@ -18,29 +18,22 @@ endmacro()
 set(CEF_TARGET libcef_dll_wrapper)
 
 set(LIBCEF_SRCS
-  ptr_util.h
+  shutdown_checker.cc
+  shutdown_checker.h
   transfer_util.cc
   transfer_util.h
   wrapper_types.h
   )
 source_group(libcef_dll FILES ${LIBCEF_SRCS})
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  list(APPEND CEF_CXX_COMPILER_FLAGS
-    -Wno-attributes             # The cfi-icall attribute is not supported by the GNU C++ compiler
-  )
-endif()
-
 set(LIBCEF_BASE_SRCS
-  base/cef_atomicops_x86_gcc.cc
-  base/cef_bind_helpers.cc
+  base/cef_atomic_flag.cc
   base/cef_callback_helpers.cc
   base/cef_callback_internal.cc
   base/cef_lock.cc
   base/cef_lock_impl.cc
   base/cef_logging.cc
   base/cef_ref_counted.cc
-  base/cef_string16.cc
   base/cef_thread_checker_impl.cc
   base/cef_weak_ptr.cc
   )
@@ -51,6 +44,8 @@ set(LIBCEF_CPPTOC_SRCS
   cpptoc/accessibility_handler_cpptoc.h
   cpptoc/app_cpptoc.cc
   cpptoc/app_cpptoc.h
+  cpptoc/audio_handler_cpptoc.cc
+  cpptoc/audio_handler_cpptoc.h
   cpptoc/base_ref_counted_cpptoc.cc
   cpptoc/base_ref_counted_cpptoc.h
   cpptoc/base_scoped_cpptoc.cc
@@ -63,12 +58,16 @@ set(LIBCEF_CPPTOC_SRCS
   cpptoc/completion_callback_cpptoc.h
   cpptoc/context_menu_handler_cpptoc.cc
   cpptoc/context_menu_handler_cpptoc.h
+  cpptoc/cookie_access_filter_cpptoc.cc
+  cpptoc/cookie_access_filter_cpptoc.h
   cpptoc/cookie_visitor_cpptoc.cc
   cpptoc/cookie_visitor_cpptoc.h
   cpptoc/cpptoc_ref_counted.h
   cpptoc/cpptoc_scoped.h
   cpptoc/delete_cookies_callback_cpptoc.cc
   cpptoc/delete_cookies_callback_cpptoc.h
+  cpptoc/dev_tools_message_observer_cpptoc.cc
+  cpptoc/dev_tools_message_observer_cpptoc.h
   cpptoc/dialog_handler_cpptoc.cc
   cpptoc/dialog_handler_cpptoc.h
   cpptoc/display_handler_cpptoc.cc
@@ -89,6 +88,8 @@ set(LIBCEF_CPPTOC_SRCS
   cpptoc/find_handler_cpptoc.h
   cpptoc/focus_handler_cpptoc.cc
   cpptoc/focus_handler_cpptoc.h
+  cpptoc/frame_handler_cpptoc.cc
+  cpptoc/frame_handler_cpptoc.h
   cpptoc/jsdialog_handler_cpptoc.cc
   cpptoc/jsdialog_handler_cpptoc.h
   cpptoc/keyboard_handler_cpptoc.cc
@@ -97,6 +98,14 @@ set(LIBCEF_CPPTOC_SRCS
   cpptoc/life_span_handler_cpptoc.h
   cpptoc/load_handler_cpptoc.cc
   cpptoc/load_handler_cpptoc.h
+  cpptoc/media_access_handler_cpptoc.cc
+  cpptoc/media_access_handler_cpptoc.h
+  cpptoc/media_observer_cpptoc.cc
+  cpptoc/media_observer_cpptoc.h
+  cpptoc/media_route_create_callback_cpptoc.cc
+  cpptoc/media_route_create_callback_cpptoc.h
+  cpptoc/media_sink_device_info_callback_cpptoc.cc
+  cpptoc/media_sink_device_info_callback_cpptoc.h
   cpptoc/menu_model_delegate_cpptoc.cc
   cpptoc/menu_model_delegate_cpptoc.h
   cpptoc/navigation_entry_visitor_cpptoc.cc
@@ -107,8 +116,6 @@ set(LIBCEF_CPPTOC_SRCS
   cpptoc/print_handler_cpptoc.h
   cpptoc/read_handler_cpptoc.cc
   cpptoc/read_handler_cpptoc.h
-  cpptoc/register_cdm_callback_cpptoc.cc
-  cpptoc/register_cdm_callback_cpptoc.h
   cpptoc/render_handler_cpptoc.cc
   cpptoc/render_handler_cpptoc.h
   cpptoc/render_process_handler_cpptoc.cc
@@ -123,6 +130,8 @@ set(LIBCEF_CPPTOC_SRCS
   cpptoc/resource_bundle_handler_cpptoc.h
   cpptoc/resource_handler_cpptoc.cc
   cpptoc/resource_handler_cpptoc.h
+  cpptoc/resource_request_handler_cpptoc.cc
+  cpptoc/resource_request_handler_cpptoc.h
   cpptoc/response_filter_cpptoc.cc
   cpptoc/response_filter_cpptoc.h
   cpptoc/run_file_dialog_callback_cpptoc.cc
@@ -233,6 +242,16 @@ set(LIBCEF_CTOCPP_SRCS
   ctocpp/jsdialog_callback_ctocpp.h
   ctocpp/list_value_ctocpp.cc
   ctocpp/list_value_ctocpp.h
+  ctocpp/media_access_callback_ctocpp.cc
+  ctocpp/media_access_callback_ctocpp.h
+  ctocpp/media_route_ctocpp.cc
+  ctocpp/media_route_ctocpp.h
+  ctocpp/media_router_ctocpp.cc
+  ctocpp/media_router_ctocpp.h
+  ctocpp/media_sink_ctocpp.cc
+  ctocpp/media_sink_ctocpp.h
+  ctocpp/media_source_ctocpp.cc
+  ctocpp/media_source_ctocpp.h
   ctocpp/menu_model_ctocpp.cc
   ctocpp/menu_model_ctocpp.h
   ctocpp/navigation_entry_ctocpp.cc
@@ -249,14 +268,18 @@ set(LIBCEF_CTOCPP_SRCS
   ctocpp/print_settings_ctocpp.h
   ctocpp/process_message_ctocpp.cc
   ctocpp/process_message_ctocpp.h
-  ctocpp/request_callback_ctocpp.cc
-  ctocpp/request_callback_ctocpp.h
+  ctocpp/registration_ctocpp.cc
+  ctocpp/registration_ctocpp.h
   ctocpp/request_context_ctocpp.cc
   ctocpp/request_context_ctocpp.h
   ctocpp/request_ctocpp.cc
   ctocpp/request_ctocpp.h
   ctocpp/resource_bundle_ctocpp.cc
   ctocpp/resource_bundle_ctocpp.h
+  ctocpp/resource_read_callback_ctocpp.cc
+  ctocpp/resource_read_callback_ctocpp.h
+  ctocpp/resource_skip_callback_ctocpp.cc
+  ctocpp/resource_skip_callback_ctocpp.h
   ctocpp/response_ctocpp.cc
   ctocpp/response_ctocpp.h
   ctocpp/run_context_menu_callback_ctocpp.cc
@@ -345,6 +368,8 @@ set(LIBCEF_CTOCPP_VIEWS_SRCS
   ctocpp/views/menu_button_ctocpp.h
   ctocpp/views/menu_button_pressed_lock_ctocpp.cc
   ctocpp/views/menu_button_pressed_lock_ctocpp.h
+  ctocpp/views/overlay_controller_ctocpp.cc
+  ctocpp/views/overlay_controller_ctocpp.h
   ctocpp/views/panel_ctocpp.cc
   ctocpp/views/panel_ctocpp.h
   ctocpp/views/scroll_view_ctocpp.cc
@@ -360,7 +385,9 @@ source_group(libcef_dll\\\\ctocpp\\\\views FILES ${LIBCEF_CTOCPP_VIEWS_SRCS})
 
 set(LIBCEF_INCLUDE_SRCS
   ../include/cef_accessibility_handler.h
+  ../include/cef_api_hash.h
   ../include/cef_app.h
+  ../include/cef_audio_handler.h
   ../include/cef_auth_callback.h
   ../include/cef_base.h
   ../include/cef_browser.h
@@ -368,9 +395,11 @@ set(LIBCEF_INCLUDE_SRCS
   ../include/cef_callback.h
   ../include/cef_client.h
   ../include/cef_command_line.h
+  ../include/cef_config.h
   ../include/cef_context_menu_handler.h
   ../include/cef_cookie.h
   ../include/cef_crash_util.h
+  ../include/cef_devtools_message_observer.h
   ../include/cef_dialog_handler.h
   ../include/cef_display_handler.h
   ../include/cef_dom.h
@@ -384,11 +413,15 @@ set(LIBCEF_INCLUDE_SRCS
   ../include/cef_find_handler.h
   ../include/cef_focus_handler.h
   ../include/cef_frame.h
+  ../include/cef_frame_handler.h
+  ../include/cef_i18n_util.h
   ../include/cef_image.h
   ../include/cef_jsdialog_handler.h
   ../include/cef_keyboard_handler.h
   ../include/cef_life_span_handler.h
   ../include/cef_load_handler.h
+  ../include/cef_media_access_handler.h
+  ../include/cef_media_router.h
   ../include/cef_menu_model.h
   ../include/cef_menu_model_delegate.h
   ../include/cef_navigation_entry.h
@@ -399,6 +432,7 @@ set(LIBCEF_INCLUDE_SRCS
   ../include/cef_print_settings.h
   ../include/cef_process_message.h
   ../include/cef_process_util.h
+  ../include/cef_registration.h
   ../include/cef_render_handler.h
   ../include/cef_render_process_handler.h
   ../include/cef_request.h
@@ -408,6 +442,7 @@ set(LIBCEF_INCLUDE_SRCS
   ../include/cef_resource_bundle.h
   ../include/cef_resource_bundle_handler.h
   ../include/cef_resource_handler.h
+  ../include/cef_resource_request_handler.h
   ../include/cef_response.h
   ../include/cef_response_filter.h
   ../include/cef_scheme.h
@@ -429,7 +464,7 @@ set(LIBCEF_INCLUDE_SRCS
   ../include/cef_xml_reader.h
   ../include/cef_zip_reader.h
   )
-set(LIBCEF_INCLUDE_SRCS_MACOSX
+set(LIBCEF_INCLUDE_SRCS_MAC
   ../include/cef_application_mac.h
   ../include/cef_sandbox_mac.h
   )
@@ -440,31 +475,36 @@ LIBCEF_APPEND_PLATFORM_SOURCES(LIBCEF_INCLUDE_SRCS)
 source_group(include FILES ${LIBCEF_INCLUDE_SRCS})
 
 set(LIBCEF_INCLUDE_BASE_SRCS
+  ../include/base/cef_atomic_flag.h
   ../include/base/cef_atomic_ref_count.h
-  ../include/base/cef_atomicops.h
+  ../include/base/cef_auto_reset.h
   ../include/base/cef_basictypes.h
   ../include/base/cef_bind.h
-  ../include/base/cef_bind_helpers.h
   ../include/base/cef_build.h
   ../include/base/cef_callback.h
   ../include/base/cef_callback_forward.h
   ../include/base/cef_callback_helpers.h
   ../include/base/cef_callback_list.h
   ../include/base/cef_cancelable_callback.h
+  ../include/base/cef_compiler_specific.h
+  ../include/base/cef_cxx17_backports.h
   ../include/base/cef_lock.h
   ../include/base/cef_logging.h
   ../include/base/cef_macros.h
-  ../include/base/cef_move.h
   ../include/base/cef_platform_thread.h
+  ../include/base/cef_ptr_util.h
   ../include/base/cef_ref_counted.h
-  ../include/base/cef_scoped_ptr.h
-  ../include/base/cef_string16.h
+  ../include/base/cef_scoped_refptr.h
   ../include/base/cef_template_util.h
   ../include/base/cef_thread_checker.h
   ../include/base/cef_trace_event.h
   ../include/base/cef_tuple.h
   ../include/base/cef_weak_ptr.h
   )
+set(LIBCEF_INCLUDE_BASE_SRCS_MAC
+  ../include/base/cef_scoped_typeref_mac.h
+  )
+LIBCEF_APPEND_PLATFORM_SOURCES(LIBCEF_INCLUDE_BASE_SRCS)
 source_group(include\\\\base FILES ${LIBCEF_INCLUDE_BASE_SRCS})
 
 set(LIBCEF_INCLUDE_BASE_INTERNAL_SRCS
@@ -472,20 +512,11 @@ set(LIBCEF_INCLUDE_BASE_INTERNAL_SRCS
   ../include/base/internal/cef_callback_internal.h
   ../include/base/internal/cef_lock_impl.h
   ../include/base/internal/cef_raw_scoped_refptr_mismatch_checker.h
+  ../include/base/internal/cef_scoped_policy.h
   ../include/base/internal/cef_thread_checker_impl.h
   )
-set(LIBCEF_INCLUDE_BASE_INTERNAL_SRCS_LINUX
-  ../include/base/internal/cef_atomicops_arm_gcc.h
-  ../include/base/internal/cef_atomicops_atomicword_compat.h
-  ../include/base/internal/cef_atomicops_x86_gcc.h
-  )
-set(LIBCEF_INCLUDE_BASE_INTERNAL_SRCS_MACOSX
-  ../include/base/internal/cef_atomicops_atomicword_compat.h
-  ../include/base/internal/cef_atomicops_mac.h
-  )
-set(LIBCEF_INCLUDE_BASE_INTERNAL_SRCS_WINDOWS
-  ../include/base/internal/cef_atomicops_x86_msvc.h
-  ../include/base/internal/cef_bind_internal_win.h
+set(LIBCEF_INCLUDE_BASE_INTERNAL_SRCS_MAC
+  ../include/base/internal/cef_scoped_block_mac.h
   )
 LIBCEF_APPEND_PLATFORM_SOURCES(LIBCEF_INCLUDE_BASE_INTERNAL_SRCS)
 source_group(include\\\\base\\\\internal FILES ${LIBCEF_INCLUDE_BASE_INTERNAL_SRCS})
@@ -493,6 +524,7 @@ source_group(include\\\\base\\\\internal FILES ${LIBCEF_INCLUDE_BASE_INTERNAL_SR
 set(LIBCEF_INCLUDE_CAPI_SRCS
   ../include/capi/cef_accessibility_handler_capi.h
   ../include/capi/cef_app_capi.h
+  ../include/capi/cef_audio_handler_capi.h
   ../include/capi/cef_auth_callback_capi.h
   ../include/capi/cef_base_capi.h
   ../include/capi/cef_browser_capi.h
@@ -503,6 +535,7 @@ set(LIBCEF_INCLUDE_CAPI_SRCS
   ../include/capi/cef_context_menu_handler_capi.h
   ../include/capi/cef_cookie_capi.h
   ../include/capi/cef_crash_util_capi.h
+  ../include/capi/cef_devtools_message_observer_capi.h
   ../include/capi/cef_dialog_handler_capi.h
   ../include/capi/cef_display_handler_capi.h
   ../include/capi/cef_dom_capi.h
@@ -516,11 +549,15 @@ set(LIBCEF_INCLUDE_CAPI_SRCS
   ../include/capi/cef_find_handler_capi.h
   ../include/capi/cef_focus_handler_capi.h
   ../include/capi/cef_frame_capi.h
+  ../include/capi/cef_frame_handler_capi.h
+  ../include/capi/cef_i18n_util_capi.h
   ../include/capi/cef_image_capi.h
   ../include/capi/cef_jsdialog_handler_capi.h
   ../include/capi/cef_keyboard_handler_capi.h
   ../include/capi/cef_life_span_handler_capi.h
   ../include/capi/cef_load_handler_capi.h
+  ../include/capi/cef_media_access_handler_capi.h
+  ../include/capi/cef_media_router_capi.h
   ../include/capi/cef_menu_model_capi.h
   ../include/capi/cef_menu_model_delegate_capi.h
   ../include/capi/cef_navigation_entry_capi.h
@@ -531,6 +568,7 @@ set(LIBCEF_INCLUDE_CAPI_SRCS
   ../include/capi/cef_print_settings_capi.h
   ../include/capi/cef_process_message_capi.h
   ../include/capi/cef_process_util_capi.h
+  ../include/capi/cef_registration_capi.h
   ../include/capi/cef_render_handler_capi.h
   ../include/capi/cef_render_process_handler_capi.h
   ../include/capi/cef_request_capi.h
@@ -540,6 +578,7 @@ set(LIBCEF_INCLUDE_CAPI_SRCS
   ../include/capi/cef_resource_bundle_capi.h
   ../include/capi/cef_resource_bundle_handler_capi.h
   ../include/capi/cef_resource_handler_capi.h
+  ../include/capi/cef_resource_request_handler_capi.h
   ../include/capi/cef_response_capi.h
   ../include/capi/cef_response_filter_capi.h
   ../include/capi/cef_scheme_capi.h
@@ -580,6 +619,7 @@ set(LIBCEF_INCLUDE_CAPI_VIEWS_SRCS
   ../include/capi/views/cef_layout_capi.h
   ../include/capi/views/cef_menu_button_capi.h
   ../include/capi/views/cef_menu_button_delegate_capi.h
+  ../include/capi/views/cef_overlay_controller_capi.h
   ../include/capi/views/cef_panel_capi.h
   ../include/capi/views/cef_panel_delegate_capi.h
   ../include/capi/views/cef_scroll_view_capi.h
@@ -606,13 +646,14 @@ set(LIBCEF_INCLUDE_INTERNAL_SRCS
   ../include/internal/cef_time.h
   ../include/internal/cef_trace_event_internal.h
   ../include/internal/cef_types.h
+  ../include/internal/cef_types_geometry.h
   ../include/internal/cef_types_wrappers.h
   )
 set(LIBCEF_INCLUDE_INTERNAL_SRCS_LINUX
   ../include/internal/cef_linux.h
   ../include/internal/cef_types_linux.h
   )
-set(LIBCEF_INCLUDE_INTERNAL_SRCS_MACOSX
+set(LIBCEF_INCLUDE_INTERNAL_SRCS_MAC
   ../include/internal/cef_mac.h
   ../include/internal/cef_types_mac.h
   )
@@ -641,6 +682,7 @@ set(LIBCEF_INCLUDE_VIEWS_SRCS
   ../include/views/cef_layout.h
   ../include/views/cef_menu_button.h
   ../include/views/cef_menu_button_delegate.h
+  ../include/views/cef_overlay_controller.h
   ../include/views/cef_panel.h
   ../include/views/cef_panel_delegate.h
   ../include/views/cef_scroll_view.h
@@ -664,7 +706,7 @@ set(LIBCEF_INCLUDE_WRAPPER_SRCS
   ../include/wrapper/cef_xml_object.h
   ../include/wrapper/cef_zip_archive.h
   )
-set(LIBCEF_INCLUDE_WRAPPER_SRCS_MACOSX
+set(LIBCEF_INCLUDE_WRAPPER_SRCS_MAC
   ../include/wrapper/cef_library_loader.h
   )
 LIBCEF_APPEND_PLATFORM_SOURCES(LIBCEF_INCLUDE_WRAPPER_SRCS)
@@ -683,7 +725,7 @@ set(LIBCEF_WRAPPER_SRCS
   wrapper/libcef_dll_wrapper.cc
   wrapper/libcef_dll_wrapper2.cc
   )
-set(LIBCEF_WRAPPER_SRCS_MACOSX
+set(LIBCEF_WRAPPER_SRCS_MAC
   wrapper/cef_library_loader_mac.mm
   wrapper/libcef_dll_dylib.cc
   )

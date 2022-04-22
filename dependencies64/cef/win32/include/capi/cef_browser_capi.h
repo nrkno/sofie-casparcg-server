@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Marshall A. Greenblatt. All rights reserved.
+// Copyright (c) 2021 Marshall A. Greenblatt. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@
 // by hand. See the translator.README.txt file in the tools directory for
 // more information.
 //
-// $hash=faac9d17d7efae3a72c4cc44474071027596c843$
+// $hash=b83b96e2b90124bba8084e2df7f66cc6749df872$
 //
 
 #ifndef CEF_INCLUDE_CAPI_CEF_BROWSER_CAPI_H_
@@ -41,11 +41,12 @@
 #pragma once
 
 #include "include/capi/cef_base_capi.h"
+#include "include/capi/cef_devtools_message_observer_capi.h"
 #include "include/capi/cef_drag_data_capi.h"
 #include "include/capi/cef_frame_capi.h"
 #include "include/capi/cef_image_capi.h"
 #include "include/capi/cef_navigation_entry_capi.h"
-#include "include/capi/cef_process_message_capi.h"
+#include "include/capi/cef_registration_capi.h"
 #include "include/capi/cef_request_context_capi.h"
 
 #ifdef __cplusplus
@@ -56,16 +57,22 @@ struct _cef_browser_host_t;
 struct _cef_client_t;
 
 ///
-// Structure used to represent a browser window. When used in the browser
-// process the functions of this structure may be called on any thread unless
-// otherwise indicated in the comments. When used in the render process the
-// functions of this structure may only be called on the main thread.
+// Structure used to represent a browser. When used in the browser process the
+// functions of this structure may be called on any thread unless otherwise
+// indicated in the comments. When used in the render process the functions of
+// this structure may only be called on the main thread.
 ///
 typedef struct _cef_browser_t {
   ///
   // Base structure.
   ///
   cef_base_ref_counted_t base;
+
+  ///
+  // True if this object is currently valid. This will return false (0) after
+  // cef_life_span_handler_t::OnBeforeClose is called.
+  ///
+  int(CEF_CALLBACK* is_valid)(struct _cef_browser_t* self);
 
   ///
   // Returns the browser host object. This function can only be called in the
@@ -128,7 +135,7 @@ typedef struct _cef_browser_t {
                              struct _cef_browser_t* that);
 
   ///
-  // Returns true (1) if the window is a popup window.
+  // Returns true (1) if the browser is a popup.
   ///
   int(CEF_CALLBACK* is_popup)(struct _cef_browser_t* self);
 
@@ -138,13 +145,19 @@ typedef struct _cef_browser_t {
   int(CEF_CALLBACK* has_document)(struct _cef_browser_t* self);
 
   ///
-  // Returns the main (top-level) frame for the browser window.
+  // Returns the main (top-level) frame for the browser. In the browser process
+  // this will return a valid object until after
+  // cef_life_span_handler_t::OnBeforeClose is called. In the renderer process
+  // this will return NULL if the main frame is hosted in a different renderer
+  // process (e.g. for cross-origin sub-frames). The main frame object will
+  // change during cross-origin navigation or re-navigation after renderer
+  // process termination (due to crashes, etc).
   ///
   struct _cef_frame_t*(CEF_CALLBACK* get_main_frame)(
       struct _cef_browser_t* self);
 
   ///
-  // Returns the focused frame for the browser window.
+  // Returns the focused frame for the browser.
   ///
   struct _cef_frame_t*(CEF_CALLBACK* get_focused_frame)(
       struct _cef_browser_t* self);
@@ -179,15 +192,6 @@ typedef struct _cef_browser_t {
   ///
   void(CEF_CALLBACK* get_frame_names)(struct _cef_browser_t* self,
                                       cef_string_list_t names);
-
-  ///
-  // Send a message to the specified |target_process|. Returns true (1) if the
-  // message was sent successfully.
-  ///
-  int(CEF_CALLBACK* send_process_message)(
-      struct _cef_browser_t* self,
-      cef_process_id_t target_process,
-      struct _cef_process_message_t* message);
 } cef_browser_t;
 
 ///
@@ -282,10 +286,10 @@ typedef struct _cef_download_image_callback_t {
 } cef_download_image_callback_t;
 
 ///
-// Structure used to represent the browser process aspects of a browser window.
-// The functions of this structure can only be called in the browser process.
-// They may be called on any thread in that process unless otherwise indicated
-// in the comments.
+// Structure used to represent the browser process aspects of a browser. The
+// functions of this structure can only be called in the browser process. They
+// may be called on any thread in that process unless otherwise indicated in the
+// comments.
 ///
 typedef struct _cef_browser_host_t {
   ///
@@ -314,11 +318,12 @@ typedef struct _cef_browser_host_t {
 
   ///
   // Helper for closing a browser. Call this function from the top-level window
-  // close handler. Internally this calls CloseBrowser(false (0)) if the close
-  // has not yet been initiated. This function returns false (0) while the close
-  // is pending and true (1) after the close has completed. See close_browser()
-  // and cef_life_span_handler_t::do_close() documentation for additional usage
-  // information. This function must be called on the browser process UI thread.
+  // close handler (if any). Internally this calls CloseBrowser(false (0)) if
+  // the close has not yet been initiated. This function returns false (0) while
+  // the close is pending and true (1) after the close has completed. See
+  // close_browser() and cef_life_span_handler_t::do_close() documentation for
+  // additional usage information. This function must be called on the browser
+  // process UI thread.
   ///
   int(CEF_CALLBACK* try_close_browser)(struct _cef_browser_host_t* self);
 
@@ -328,18 +333,19 @@ typedef struct _cef_browser_host_t {
   void(CEF_CALLBACK* set_focus)(struct _cef_browser_host_t* self, int focus);
 
   ///
-  // Retrieve the window handle for this browser. If this browser is wrapped in
-  // a cef_browser_view_t this function should be called on the browser process
-  // UI thread and it will return the handle for the top-level native window.
+  // Retrieve the window handle (if any) for this browser. If this browser is
+  // wrapped in a cef_browser_view_t this function should be called on the
+  // browser process UI thread and it will return the handle for the top-level
+  // native window.
   ///
   cef_window_handle_t(CEF_CALLBACK* get_window_handle)(
       struct _cef_browser_host_t* self);
 
   ///
-  // Retrieve the window handle of the browser that opened this browser. Will
-  // return NULL for non-popup windows or if this browser is wrapped in a
-  // cef_browser_view_t. This function can be used in combination with custom
-  // handling of modal windows.
+  // Retrieve the window handle (if any) of the browser that opened this
+  // browser. Will return NULL for non-popup browsers or if this browser is
+  // wrapped in a cef_browser_view_t. This function can be used in combination
+  // with custom handling of modal windows.
   ///
   cef_window_handle_t(CEF_CALLBACK* get_opener_window_handle)(
       struct _cef_browser_host_t* self);
@@ -495,6 +501,71 @@ typedef struct _cef_browser_host_t {
   int(CEF_CALLBACK* has_dev_tools)(struct _cef_browser_host_t* self);
 
   ///
+  // Send a function call message over the DevTools protocol. |message| must be
+  // a UTF8-encoded JSON dictionary that contains "id" (int), "function"
+  // (string) and "params" (dictionary, optional) values. See the DevTools
+  // protocol documentation at https://chromedevtools.github.io/devtools-
+  // protocol/ for details of supported functions and the expected "params"
+  // dictionary contents. |message| will be copied if necessary. This function
+  // will return true (1) if called on the UI thread and the message was
+  // successfully submitted for validation, otherwise false (0). Validation will
+  // be applied asynchronously and any messages that fail due to formatting
+  // errors or missing parameters may be discarded without notification. Prefer
+  // ExecuteDevToolsMethod if a more structured approach to message formatting
+  // is desired.
+  //
+  // Every valid function call will result in an asynchronous function result or
+  // error message that references the sent message "id". Event messages are
+  // received while notifications are enabled (for example, between function
+  // calls for "Page.enable" and "Page.disable"). All received messages will be
+  // delivered to the observer(s) registered with AddDevToolsMessageObserver.
+  // See cef_dev_tools_message_observer_t::OnDevToolsMessage documentation for
+  // details of received message contents.
+  //
+  // Usage of the SendDevToolsMessage, ExecuteDevToolsMethod and
+  // AddDevToolsMessageObserver functions does not require an active DevTools
+  // front-end or remote-debugging session. Other active DevTools sessions will
+  // continue to function independently. However, any modification of global
+  // browser state by one session may not be reflected in the UI of other
+  // sessions.
+  //
+  // Communication with the DevTools front-end (when displayed) can be logged
+  // for development purposes by passing the `--devtools-protocol-log-
+  // file=<path>` command-line flag.
+  ///
+  int(CEF_CALLBACK* send_dev_tools_message)(struct _cef_browser_host_t* self,
+                                            const void* message,
+                                            size_t message_size);
+
+  ///
+  // Execute a function call over the DevTools protocol. This is a more
+  // structured version of SendDevToolsMessage. |message_id| is an incremental
+  // number that uniquely identifies the message (pass 0 to have the next number
+  // assigned automatically based on previous values). |function| is the
+  // function name. |params| are the function parameters, which may be NULL. See
+  // the DevTools protocol documentation (linked above) for details of supported
+  // functions and the expected |params| dictionary contents. This function will
+  // return the assigned message ID if called on the UI thread and the message
+  // was successfully submitted for validation, otherwise 0. See the
+  // SendDevToolsMessage documentation for additional usage information.
+  ///
+  int(CEF_CALLBACK* execute_dev_tools_method)(
+      struct _cef_browser_host_t* self,
+      int message_id,
+      const cef_string_t* method,
+      struct _cef_dictionary_value_t* params);
+
+  ///
+  // Add an observer for DevTools protocol messages (function results and
+  // events). The observer will remain registered until the returned
+  // Registration object is destroyed. See the SendDevToolsMessage documentation
+  // for additional usage information.
+  ///
+  struct _cef_registration_t*(CEF_CALLBACK* add_dev_tools_message_observer)(
+      struct _cef_browser_host_t* self,
+      struct _cef_dev_tools_message_observer_t* observer);
+
+  ///
   // Retrieve a snapshot of current navigation entries as values sent to the
   // specified visitor. If |current_only| is true (1) only the current
   // navigation entry will be sent, otherwise all navigation entries will be
@@ -504,19 +575,6 @@ typedef struct _cef_browser_host_t {
       struct _cef_browser_host_t* self,
       struct _cef_navigation_entry_visitor_t* visitor,
       int current_only);
-
-  ///
-  // Set whether mouse cursor change is disabled.
-  ///
-  void(CEF_CALLBACK* set_mouse_cursor_change_disabled)(
-      struct _cef_browser_host_t* self,
-      int disabled);
-
-  ///
-  // Returns true (1) if mouse cursor change is disabled.
-  ///
-  int(CEF_CALLBACK* is_mouse_cursor_change_disabled)(
-      struct _cef_browser_host_t* self);
 
   ///
   // If a misspelled word is currently selected in an editable node calling this
@@ -618,10 +676,10 @@ typedef struct _cef_browser_host_t {
       int deltaY);
 
   ///
-  // Send a focus event to the browser.
+  // Send a touch event to the browser for a windowless browser.
   ///
-  void(CEF_CALLBACK* send_focus_event)(struct _cef_browser_host_t* self,
-                                       int setFocus);
+  void(CEF_CALLBACK* send_touch_event)(struct _cef_browser_host_t* self,
+                                       const struct _cef_touch_event_t* event);
 
   ///
   // Send a capture lost event to the browser.
@@ -833,7 +891,7 @@ typedef struct _cef_browser_host_t {
 
   ///
   // Returns the extension hosted in this browser or NULL if no extension is
-  // hosted. See cef_request_tContext::LoadExtension for details.
+  // hosted. See cef_request_context_t::LoadExtension for details.
   ///
   struct _cef_extension_t*(CEF_CALLBACK* get_extension)(
       struct _cef_browser_host_t* self);
@@ -841,35 +899,55 @@ typedef struct _cef_browser_host_t {
   ///
   // Returns true (1) if this browser is hosting an extension background script.
   // Background hosts do not have a window and are not displayable. See
-  // cef_request_tContext::LoadExtension for details.
+  // cef_request_context_t::LoadExtension for details.
   ///
   int(CEF_CALLBACK* is_background_host)(struct _cef_browser_host_t* self);
+
+  ///
+  //  Set whether the browser's audio is muted.
+  ///
+  void(CEF_CALLBACK* set_audio_muted)(struct _cef_browser_host_t* self,
+                                      int mute);
+
+  ///
+  // Returns true (1) if the browser's audio is muted.  This function can only
+  // be called on the UI thread.
+  ///
+  int(CEF_CALLBACK* is_audio_muted)(struct _cef_browser_host_t* self);
 } cef_browser_host_t;
 
 ///
-// Create a new browser window using the window parameters specified by
-// |windowInfo|. All values will be copied internally and the actual window will
-// be created on the UI thread. If |request_context| is NULL the global request
+// Create a new browser using the window parameters specified by |windowInfo|.
+// All values will be copied internally and the actual window (if any) will be
+// created on the UI thread. If |request_context| is NULL the global request
 // context will be used. This function can be called on any browser process
-// thread and will not block.
+// thread and will not block. The optional |extra_info| parameter provides an
+// opportunity to specify extra information specific to the created browser that
+// will be passed to cef_render_process_handler_t::on_browser_created() in the
+// render process.
 ///
 CEF_EXPORT int cef_browser_host_create_browser(
     const cef_window_info_t* windowInfo,
     struct _cef_client_t* client,
     const cef_string_t* url,
     const struct _cef_browser_settings_t* settings,
+    struct _cef_dictionary_value_t* extra_info,
     struct _cef_request_context_t* request_context);
 
 ///
-// Create a new browser window using the window parameters specified by
-// |windowInfo|. If |request_context| is NULL the global request context will be
-// used. This function can only be called on the browser process UI thread.
+// Create a new browser using the window parameters specified by |windowInfo|.
+// If |request_context| is NULL the global request context will be used. This
+// function can only be called on the browser process UI thread. The optional
+// |extra_info| parameter provides an opportunity to specify extra information
+// specific to the created browser that will be passed to
+// cef_render_process_handler_t::on_browser_created() in the render process.
 ///
 CEF_EXPORT cef_browser_t* cef_browser_host_create_browser_sync(
     const cef_window_info_t* windowInfo,
     struct _cef_client_t* client,
     const cef_string_t* url,
     const struct _cef_browser_settings_t* settings,
+    struct _cef_dictionary_value_t* extra_info,
     struct _cef_request_context_t* request_context);
 
 #ifdef __cplusplus

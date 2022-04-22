@@ -38,6 +38,7 @@
 #define CEF_INCLUDE_CEF_CLIENT_H_
 #pragma once
 
+#include "include/cef_audio_handler.h"
 #include "include/cef_base.h"
 #include "include/cef_context_menu_handler.h"
 #include "include/cef_dialog_handler.h"
@@ -46,10 +47,13 @@
 #include "include/cef_drag_handler.h"
 #include "include/cef_find_handler.h"
 #include "include/cef_focus_handler.h"
+#include "include/cef_frame_handler.h"
 #include "include/cef_jsdialog_handler.h"
 #include "include/cef_keyboard_handler.h"
 #include "include/cef_life_span_handler.h"
 #include "include/cef_load_handler.h"
+#include "include/cef_media_access_handler.h"
+#include "include/cef_print_handler.h"
 #include "include/cef_process_message.h"
 #include "include/cef_render_handler.h"
 #include "include/cef_request_handler.h"
@@ -61,12 +65,18 @@
 class CefClient : public virtual CefBaseRefCounted {
  public:
   ///
+  // Return the handler for audio rendering events.
+  ///
+  /*--cef()--*/
+  virtual CefRefPtr<CefAudioHandler> GetAudioHandler() { return nullptr; }
+
+  ///
   // Return the handler for context menus. If no handler is provided the default
   // implementation will be used.
   ///
   /*--cef()--*/
   virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() {
-    return NULL;
+    return nullptr;
   }
 
   ///
@@ -74,83 +84,108 @@ class CefClient : public virtual CefBaseRefCounted {
   // implementation will be used.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefDialogHandler> GetDialogHandler() { return NULL; }
+  virtual CefRefPtr<CefDialogHandler> GetDialogHandler() { return nullptr; }
 
   ///
   // Return the handler for browser display state events.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() { return NULL; }
+  virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() { return nullptr; }
 
   ///
   // Return the handler for download events. If no handler is returned downloads
   // will not be allowed.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefDownloadHandler> GetDownloadHandler() { return NULL; }
+  virtual CefRefPtr<CefDownloadHandler> GetDownloadHandler() { return nullptr; }
 
   ///
   // Return the handler for drag events.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefDragHandler> GetDragHandler() { return NULL; }
+  virtual CefRefPtr<CefDragHandler> GetDragHandler() { return nullptr; }
 
   ///
   // Return the handler for find result events.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefFindHandler> GetFindHandler() { return NULL; }
+  virtual CefRefPtr<CefFindHandler> GetFindHandler() { return nullptr; }
 
   ///
   // Return the handler for focus events.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefFocusHandler> GetFocusHandler() { return NULL; }
+  virtual CefRefPtr<CefFocusHandler> GetFocusHandler() { return nullptr; }
+
+  ///
+  // Return the handler for events related to CefFrame lifespan. This method
+  // will be called once during CefBrowser creation and the result will be
+  // cached for performance reasons.
+  ///
+  /*--cef()--*/
+  virtual CefRefPtr<CefFrameHandler> GetFrameHandler() { return nullptr; }
+  
+  ///
+  // Return the handler for media access permissions requests. If no handler is
+  // provided media access will be denied by default.
+  ///
+  /*--cef()--*/
+  virtual CefRefPtr<CefMediaAccessHandler> GetMediaAccessHandler() {
+    return nullptr;
+  }
 
   ///
   // Return the handler for JavaScript dialogs. If no handler is provided the
   // default implementation will be used.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefJSDialogHandler> GetJSDialogHandler() { return NULL; }
+  virtual CefRefPtr<CefJSDialogHandler> GetJSDialogHandler() { return nullptr; }
 
   ///
   // Return the handler for keyboard events.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() { return NULL; }
+  virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() { return nullptr; }
 
   ///
   // Return the handler for browser life span events.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() { return NULL; }
+  virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() { return nullptr; }
 
   ///
   // Return the handler for browser load status events.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefLoadHandler> GetLoadHandler() { return NULL; }
+  virtual CefRefPtr<CefLoadHandler> GetLoadHandler() { return nullptr; }
+
+  ///
+  // Return the handler for printing on Linux. If a print handler is not
+  // provided then printing will not be supported on the Linux platform.
+  ///
+  /*--cef()--*/
+  virtual CefRefPtr<CefPrintHandler> GetPrintHandler() { return nullptr; }
 
   ///
   // Return the handler for off-screen rendering events.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefRenderHandler> GetRenderHandler() { return NULL; }
+  virtual CefRefPtr<CefRenderHandler> GetRenderHandler() { return nullptr; }
 
   ///
   // Return the handler for browser request events.
   ///
   /*--cef()--*/
-  virtual CefRefPtr<CefRequestHandler> GetRequestHandler() { return NULL; }
+  virtual CefRefPtr<CefRequestHandler> GetRequestHandler() { return nullptr; }
 
   ///
   // Called when a new message is received from a different process. Return true
-  // if the message was handled or false otherwise. Do not keep a reference to
-  // or attempt to access the message outside of this callback.
+  // if the message was handled or false otherwise.  It is safe to keep a
+  // reference to |message| outside of this callback.
   ///
   /*--cef()--*/
   virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+                                        CefRefPtr<CefFrame> frame,
                                         CefProcessId source_process,
                                         CefRefPtr<CefProcessMessage> message) {
     return false;

@@ -106,6 +106,19 @@ class CefViewDelegate : public virtual CefBaseRefCounted {
                                   CefRefPtr<CefView> child) {}
 
   ///
+  // Called when |view| is added or removed from the CefWindow.
+  ///
+  /*--cef()--*/
+  virtual void OnWindowChanged(CefRefPtr<CefView> view, bool added) {}
+
+  ///
+  // Called when the layout of |view| has changed.
+  ///
+  /*--cef()--*/
+  virtual void OnLayoutChanged(CefRefPtr<CefView> view,
+                               const CefRect& new_bounds) {}
+
+  ///
   // Called when |view| gains focus.
   ///
   /*--cef()--*/

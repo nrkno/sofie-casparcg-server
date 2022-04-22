@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=8f56aeb476b2f1e8c13d448f24557eb91d9b7e68$
+// $hash=7ef7668148af4ad90257fe5e469ba360fb27cad2$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_DRAG_HANDLER_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefDragHandlerCppToC : public CefCppToCRefCounted<CefDragHandlerCppToC,
                                                         cef_drag_handler_t> {
  public:
   CefDragHandlerCppToC();
+  virtual ~CefDragHandlerCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_DRAG_HANDLER_CPPTOC_H_

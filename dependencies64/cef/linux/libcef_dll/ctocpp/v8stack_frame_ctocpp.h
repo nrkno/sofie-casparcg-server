@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=a82576c1b98245f3db95ed8f69f276f9be6b988c$
+// $hash=6287d21581cc9cf0593134eaa1de4dd97628f495$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_V8STACK_FRAME_CTOCPP_H_
@@ -31,16 +31,17 @@ class CefV8StackFrameCToCpp : public CefCToCppRefCounted<CefV8StackFrameCToCpp,
                                                          cef_v8stack_frame_t> {
  public:
   CefV8StackFrameCToCpp();
+  virtual ~CefV8StackFrameCToCpp();
 
   // CefV8StackFrame methods.
-  bool IsValid() OVERRIDE;
-  CefString GetScriptName() OVERRIDE;
-  CefString GetScriptNameOrSourceURL() OVERRIDE;
-  CefString GetFunctionName() OVERRIDE;
-  int GetLineNumber() OVERRIDE;
-  int GetColumn() OVERRIDE;
-  bool IsEval() OVERRIDE;
-  bool IsConstructor() OVERRIDE;
+  bool IsValid() override;
+  CefString GetScriptName() override;
+  CefString GetScriptNameOrSourceURL() override;
+  CefString GetFunctionName() override;
+  int GetLineNumber() override;
+  int GetColumn() override;
+  bool IsEval() override;
+  bool IsConstructor() override;
 };
 
 #endif  // CEF_LIBCEF_DLL_CTOCPP_V8STACK_FRAME_CTOCPP_H_

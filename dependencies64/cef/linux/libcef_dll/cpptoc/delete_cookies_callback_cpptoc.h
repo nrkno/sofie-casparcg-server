@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=eb833faeb559cbe9df0e45ba6893c9697e8c16df$
+// $hash=867dea9b048c71bbbb7ba593a60cfd9c572646e2$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_DELETE_COOKIES_CALLBACK_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefDeleteCookiesCallbackCppToC
                                  cef_delete_cookies_callback_t> {
  public:
   CefDeleteCookiesCallbackCppToC();
+  virtual ~CefDeleteCookiesCallbackCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_DELETE_COOKIES_CALLBACK_CPPTOC_H_

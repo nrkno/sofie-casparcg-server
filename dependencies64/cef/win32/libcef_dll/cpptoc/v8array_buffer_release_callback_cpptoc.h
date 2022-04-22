@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=5af3a556386cd8521e6be1929bd191ffe521a388$
+// $hash=f81c22987c573f1f41e87bf1476d485da44b7161$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_V8ARRAY_BUFFER_RELEASE_CALLBACK_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefV8ArrayBufferReleaseCallbackCppToC
                                  cef_v8array_buffer_release_callback_t> {
  public:
   CefV8ArrayBufferReleaseCallbackCppToC();
+  virtual ~CefV8ArrayBufferReleaseCallbackCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_V8ARRAY_BUFFER_RELEASE_CALLBACK_CPPTOC_H_

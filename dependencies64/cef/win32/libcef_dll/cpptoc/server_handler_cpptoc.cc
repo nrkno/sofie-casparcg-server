@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,13 +9,14 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=1650264b28d08594c92a64a80c2cdec958b01263$
+// $hash=db2d9db129a9cb038550aaed5b369fd5966efcff$
 //
 
 #include "libcef_dll/cpptoc/server_handler_cpptoc.h"
 #include "libcef_dll/ctocpp/callback_ctocpp.h"
 #include "libcef_dll/ctocpp/request_ctocpp.h"
 #include "libcef_dll/ctocpp/server_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -24,6 +25,8 @@ namespace {
 void CEF_CALLBACK
 server_handler_on_server_created(struct _cef_server_handler_t* self,
                                  cef_server_t* server) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -42,6 +45,8 @@ server_handler_on_server_created(struct _cef_server_handler_t* self,
 void CEF_CALLBACK
 server_handler_on_server_destroyed(struct _cef_server_handler_t* self,
                                    cef_server_t* server) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -61,6 +66,8 @@ void CEF_CALLBACK
 server_handler_on_client_connected(struct _cef_server_handler_t* self,
                                    cef_server_t* server,
                                    int connection_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -80,6 +87,8 @@ void CEF_CALLBACK
 server_handler_on_client_disconnected(struct _cef_server_handler_t* self,
                                       cef_server_t* server,
                                       int connection_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -101,6 +110,8 @@ server_handler_on_http_request(struct _cef_server_handler_t* self,
                                int connection_id,
                                const cef_string_t* client_address,
                                cef_request_t* request) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -132,6 +143,8 @@ server_handler_on_web_socket_request(struct _cef_server_handler_t* self,
                                      const cef_string_t* client_address,
                                      cef_request_t* request,
                                      cef_callback_t* callback) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -164,6 +177,8 @@ void CEF_CALLBACK
 server_handler_on_web_socket_connected(struct _cef_server_handler_t* self,
                                        cef_server_t* server,
                                        int connection_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -185,6 +200,8 @@ server_handler_on_web_socket_message(struct _cef_server_handler_t* self,
                                      int connection_id,
                                      const void* data,
                                      size_t data_size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -219,6 +236,12 @@ CefServerHandlerCppToC::CefServerHandlerCppToC() {
   GetStruct()->on_web_socket_message = server_handler_on_web_socket_message;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefServerHandlerCppToC::~CefServerHandlerCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefServerHandler> CefCppToCRefCounted<
     CefServerHandlerCppToC,
@@ -226,16 +249,8 @@ CefRefPtr<CefServerHandler> CefCppToCRefCounted<
     cef_server_handler_t>::UnwrapDerived(CefWrapperType type,
                                          cef_server_handler_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefServerHandlerCppToC,
-                                         CefServerHandler,
-                                         cef_server_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefServerHandlerCppToC,

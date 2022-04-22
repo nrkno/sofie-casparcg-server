@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,15 +9,18 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=4ae1f2c5eb73a7dff5d96bc42750bbf8034e6ddb$
+// $hash=ce4a97355d799789b70c90757138b5c639da55a8$
 //
 
 #include "libcef_dll/ctocpp/sslinfo_ctocpp.h"
 #include "libcef_dll/ctocpp/x509certificate_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall") cef_cert_status_t CefSSLInfoCToCpp::GetCertStatus() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_sslinfo_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_cert_status))
     return CERT_STATUS_NONE;
@@ -33,9 +36,11 @@ NO_SANITIZE("cfi-icall") cef_cert_status_t CefSSLInfoCToCpp::GetCertStatus() {
 
 NO_SANITIZE("cfi-icall")
 CefRefPtr<CefX509Certificate> CefSSLInfoCToCpp::GetX509Certificate() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_sslinfo_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_x509certificate))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -50,21 +55,20 @@ CefRefPtr<CefX509Certificate> CefSSLInfoCToCpp::GetX509Certificate() {
 
 CefSSLInfoCToCpp::CefSSLInfoCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefSSLInfoCToCpp::~CefSSLInfoCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_sslinfo_t*
 CefCToCppRefCounted<CefSSLInfoCToCpp, CefSSLInfo, cef_sslinfo_t>::UnwrapDerived(
     CefWrapperType type,
     CefSSLInfo* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCToCppRefCounted<CefSSLInfoCToCpp, CefSSLInfo, cef_sslinfo_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefSSLInfoCToCpp,

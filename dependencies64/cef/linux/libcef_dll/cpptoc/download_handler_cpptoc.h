@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=27520878d8fae88d096cb8f2507a733b4e90cfc1$
+// $hash=7f7550fe074374d10b0601de008eaa81c72f8758$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_DOWNLOAD_HANDLER_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefDownloadHandlerCppToC
                                  cef_download_handler_t> {
  public:
   CefDownloadHandlerCppToC();
+  virtual ~CefDownloadHandlerCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_DOWNLOAD_HANDLER_CPPTOC_H_

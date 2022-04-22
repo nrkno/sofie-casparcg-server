@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Marshall A. Greenblatt. All rights reserved.
+// Copyright (c) 2021 Marshall A. Greenblatt. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@
 // by hand. See the translator.README.txt file in the tools directory for
 // more information.
 //
-// $hash=cf5dc6f6d2c64d5dc706edd5adc5cf6c7c752750$
+// $hash=0834dc141b9cca248a9f27fee86456e610f04a41$
 //
 
 #ifndef CEF_INCLUDE_CAPI_CEF_RENDER_HANDLER_CAPI_H_
@@ -147,10 +147,29 @@ typedef struct _cef_render_handler_t {
   // Called when an element has been rendered to the shared texture handle.
   // |type| indicates whether the element is the view or the popup widget.
   // |dirtyRects| contains the set of rectangles in pixel coordinates that need
-  // to be repainted. |shared_handle| is the handle for a D3D11 Texture2D that
-  // can be accessed via ID3D11Device using the OpenSharedResource function.
-  // This function is only called when cef_window_tInfo::shared_texture_enabled
-  // is set to true (1), and is currently only supported on Windows.
+  // to be repainted. |shared_handle| is an OS specific type defined below. This
+  // function is only called when cef_window_tInfo::shared_texture_enabled is
+  // set to true (1) (1), and is currently only supported on Windows and Mac.
+  //
+  // Internally, there is a small queue of textures being sent round-robbin via
+  // this call - clients may hold on to a texture reference until the next time
+  // OnAcceleratedPaint is called, at which time the old texture must be
+  // released. If a client needs the reference longer, it must be copied. It may
+  // be assumed that every call to OnAcceleratedPaint is a different texture
+  // handle than the immediately previous call.
+  //
+  // On Windows: |shared_handle| is the handle for a D3D11 Texture2D that can be
+  // accessed via ID3D11Device1 using the OpenSharedResource1 function. The
+  // texture was created with the flags: D3D11_RESOURCE_MISC_SHARED_NTHANDLE |
+  // D3D11_RESOURCE_MISC_SHARED_KEYED_MUTEX.  Clients must acquire the DXGI
+  // keyed mutex via IDXGIKeyedMutex::AcquireSync with a value of 1, and release
+  // it when finished with a value of 0.
+  //
+  // On Mac: |shared_handle| is an IOSurface wrapped in a mach_port_t. Clients
+  // can access this by using:
+  //  IOSurfaceLookupFromMachPort((mach_port_t)shared_handle)
+  // and then using CGLTexImageIOSurface2D() to bind it to an OpenGL texture.
+  // Clients will need to use GL_TEXTURE_RECTANGLE and not GL_TEXTURE_2D.
   ///
   void(CEF_CALLBACK* on_accelerated_paint)(struct _cef_render_handler_t* self,
                                            struct _cef_browser_t* browser,
@@ -158,17 +177,6 @@ typedef struct _cef_render_handler_t {
                                            size_t dirtyRectsCount,
                                            cef_rect_t const* dirtyRects,
                                            void* shared_handle);
-
-  ///
-  // Called when the browser's cursor has changed. If |type| is CT_CUSTOM then
-  // |custom_cursor_info| will be populated with the custom cursor information.
-  ///
-  void(CEF_CALLBACK* on_cursor_change)(
-      struct _cef_render_handler_t* self,
-      struct _cef_browser_t* browser,
-      cef_cursor_handle_t cursor,
-      cef_cursor_type_t type,
-      const struct _cef_cursor_info_t* custom_cursor_info);
 
   ///
   // Called when the user starts dragging content in the web view. Contextual
@@ -231,6 +239,17 @@ typedef struct _cef_render_handler_t {
       struct _cef_browser_t* browser,
       const cef_string_t* selected_text,
       const cef_range_t* selected_range);
+
+  ///
+  // Called when an on-screen keyboard should be shown or hidden for the
+  // specified |browser|. |input_mode| specifies what kind of keyboard should be
+  // opened. If |input_mode| is CEF_TEXT_INPUT_MODE_NONE, any existing keyboard
+  // for this browser should be hidden.
+  ///
+  void(CEF_CALLBACK* on_virtual_keyboard_requested)(
+      struct _cef_render_handler_t* self,
+      struct _cef_browser_t* browser,
+      cef_text_input_mode_t input_mode);
 } cef_render_handler_t;
 
 #ifdef __cplusplus

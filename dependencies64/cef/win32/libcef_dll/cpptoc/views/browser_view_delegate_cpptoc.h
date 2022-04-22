@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=76e7ebaa4de60da787cbda41be1b00dd080cd621$
+// $hash=2b3f4fa67ceac32d479043f0b8012c36a4c4ee1f$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_VIEWS_BROWSER_VIEW_DELEGATE_CPPTOC_H_
@@ -36,6 +36,7 @@ class CefBrowserViewDelegateCppToC
                                  cef_browser_view_delegate_t> {
  public:
   CefBrowserViewDelegateCppToC();
+  virtual ~CefBrowserViewDelegateCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_VIEWS_BROWSER_VIEW_DELEGATE_CPPTOC_H_

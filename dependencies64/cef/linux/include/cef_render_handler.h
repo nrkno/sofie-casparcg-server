@@ -52,11 +52,11 @@
 /*--cef(source=client)--*/
 class CefRenderHandler : public virtual CefBaseRefCounted {
  public:
-  typedef cef_cursor_type_t CursorType;
   typedef cef_drag_operations_mask_t DragOperation;
   typedef cef_drag_operations_mask_t DragOperationsMask;
   typedef cef_paint_element_type_t PaintElementType;
   typedef std::vector<CefRect> RectList;
+  typedef cef_text_input_mode_t TextInputMode;
 
   ///
   // Return the handler for accessibility notifications. If no handler is
@@ -64,7 +64,7 @@ class CefRenderHandler : public virtual CefBaseRefCounted {
   ///
   /*--cef()--*/
   virtual CefRefPtr<CefAccessibilityHandler> GetAccessibilityHandler() {
-    return NULL;
+    return nullptr;
   }
 
   ///
@@ -150,26 +150,35 @@ class CefRenderHandler : public virtual CefBaseRefCounted {
   // Called when an element has been rendered to the shared texture handle.
   // |type| indicates whether the element is the view or the popup widget.
   // |dirtyRects| contains the set of rectangles in pixel coordinates that need
-  // to be repainted. |shared_handle| is the handle for a D3D11 Texture2D that
-  // can be accessed via ID3D11Device using the OpenSharedResource method. This
-  // method is only called when CefWindowInfo::shared_texture_enabled is set to
-  // true, and is currently only supported on Windows.
+  // to be repainted. |shared_handle| is an OS specific type defined below. This
+  // function is only called when cef_window_tInfo::shared_texture_enabled is
+  // set to true (1), and is currently only supported on Windows and Mac.
+  //
+  // Internally, there is a small queue of textures being sent round-robbin via
+  // this call - clients may hold on to a texture reference until the next time
+  // OnAcceleratedPaint is called, at which time the old texture must be
+  // released. If a client needs the reference longer, it must be copied. It may
+  // be assumed that every call to OnAcceleratedPaint is a different texture
+  // handle than the immediately previous call.
+  //
+  // On Windows: |shared_handle| is the handle for a D3D11 Texture2D that can be
+  // accessed via ID3D11Device1 using the OpenSharedResource1 function. The
+  // texture was created with the flags: D3D11_RESOURCE_MISC_SHARED_NTHANDLE |
+  // D3D11_RESOURCE_MISC_SHARED_KEYED_MUTEX.  Clients must acquire the DXGI
+  // keyed mutex via IDXGIKeyedMutex::AcquireSync with a value of 1, and release
+  // it when finished with a value of 0.
+  //
+  // On Mac: |shared_handle| is an IOSurface wrapped in a mach_port_t. Clients
+  // can access this by using:
+  //  IOSurfaceLookupFromMachPort((mach_port_t)shared_handle)
+  // and then using CGLTexImageIOSurface2D() to bind it to an OpenGL texture.
+  // Clients will need to use GL_TEXTURE_RECTANGLE and not GL_TEXTURE_2D.
   ///
   /*--cef()--*/
   virtual void OnAcceleratedPaint(CefRefPtr<CefBrowser> browser,
                                   PaintElementType type,
                                   const RectList& dirtyRects,
                                   void* shared_handle) {}
-
-  ///
-  // Called when the browser's cursor has changed. If |type| is CT_CUSTOM then
-  // |custom_cursor_info| will be populated with the custom cursor information.
-  ///
-  /*--cef()--*/
-  virtual void OnCursorChange(CefRefPtr<CefBrowser> browser,
-                              CefCursorHandle cursor,
-                              CursorType type,
-                              const CefCursorInfo& custom_cursor_info) {}
 
   ///
   // Called when the user starts dragging content in the web view. Contextual
@@ -231,6 +240,16 @@ class CefRenderHandler : public virtual CefBaseRefCounted {
   virtual void OnTextSelectionChanged(CefRefPtr<CefBrowser> browser,
                                       const CefString& selected_text,
                                       const CefRange& selected_range) {}
+
+  ///
+  // Called when an on-screen keyboard should be shown or hidden for the
+  // specified |browser|. |input_mode| specifies what kind of keyboard
+  // should be opened. If |input_mode| is CEF_TEXT_INPUT_MODE_NONE, any
+  // existing keyboard for this browser should be hidden.
+  ///
+  /*--cef()--*/
+  virtual void OnVirtualKeyboardRequested(CefRefPtr<CefBrowser> browser,
+                                          TextInputMode input_mode) {}
 };
 
 #endif  // CEF_INCLUDE_CEF_RENDER_HANDLER_H_

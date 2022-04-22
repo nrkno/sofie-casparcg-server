@@ -19,15 +19,8 @@ CefRawPtr<CefBaseScoped>
 CefCppToCScoped<CefBaseScopedCppToC, CefBaseScoped, cef_base_scoped_t>::
     UnwrapDerivedRaw(CefWrapperType type, cef_base_scoped_t* s) {
   NOTREACHED();
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCScoped<CefBaseScopedCppToC, CefBaseScoped, cef_base_scoped_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCScoped<CefBaseScopedCppToC,

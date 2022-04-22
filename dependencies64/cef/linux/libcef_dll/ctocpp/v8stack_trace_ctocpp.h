@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=290999bd7031e84e5fc7867aed2cd07d9b52e9b6$
+// $hash=21dabd0e5523be4bcb1b2256cd0392142d9e0eb7$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_V8STACK_TRACE_CTOCPP_H_
@@ -31,11 +31,12 @@ class CefV8StackTraceCToCpp : public CefCToCppRefCounted<CefV8StackTraceCToCpp,
                                                          cef_v8stack_trace_t> {
  public:
   CefV8StackTraceCToCpp();
+  virtual ~CefV8StackTraceCToCpp();
 
   // CefV8StackTrace methods.
-  bool IsValid() OVERRIDE;
-  int GetFrameCount() OVERRIDE;
-  CefRefPtr<CefV8StackFrame> GetFrame(int index) OVERRIDE;
+  bool IsValid() override;
+  int GetFrameCount() override;
+  CefRefPtr<CefV8StackFrame> GetFrame(int index) override;
 };
 
 #endif  // CEF_LIBCEF_DLL_CTOCPP_V8STACK_TRACE_CTOCPP_H_

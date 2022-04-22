@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=079e2fb47dd6c02cac0bf1b24f6224889028e673$
+// $hash=2668b4409013efe51d31cfae5fce743530cdb994$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_WEB_PLUGIN_INFO_CTOCPP_H_
@@ -34,12 +34,13 @@ class CefWebPluginInfoCToCpp
                                  cef_web_plugin_info_t> {
  public:
   CefWebPluginInfoCToCpp();
+  virtual ~CefWebPluginInfoCToCpp();
 
   // CefWebPluginInfo methods.
-  CefString GetName() OVERRIDE;
-  CefString GetPath() OVERRIDE;
-  CefString GetVersion() OVERRIDE;
-  CefString GetDescription() OVERRIDE;
+  CefString GetName() override;
+  CefString GetPath() override;
+  CefString GetVersion() override;
+  CefString GetDescription() override;
 };
 
 #endif  // CEF_LIBCEF_DLL_CTOCPP_WEB_PLUGIN_INFO_CTOCPP_H_

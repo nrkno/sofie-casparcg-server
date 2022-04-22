@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=db9319896cf61ca39a127c00f4d6b0ee801d7938$
+// $hash=f4cf5ba559fdc51bcc7e5fa88416d509664c5239$
 //
 
 #include "libcef_dll/cpptoc/completion_callback_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -20,6 +21,8 @@ namespace {
 
 void CEF_CALLBACK
 completion_callback_on_complete(struct _cef_completion_callback_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -38,6 +41,12 @@ CefCompletionCallbackCppToC::CefCompletionCallbackCppToC() {
   GetStruct()->on_complete = completion_callback_on_complete;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefCompletionCallbackCppToC::~CefCompletionCallbackCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefCompletionCallback> CefCppToCRefCounted<
     CefCompletionCallbackCppToC,
@@ -45,16 +54,8 @@ CefRefPtr<CefCompletionCallback> CefCppToCRefCounted<
     cef_completion_callback_t>::UnwrapDerived(CefWrapperType type,
                                               cef_completion_callback_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefCompletionCallbackCppToC,
-                                         CefCompletionCallback,
-                                         cef_completion_callback_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefCompletionCallbackCppToC,

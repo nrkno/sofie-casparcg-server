@@ -15,6 +15,7 @@
 #include <string.h>
 #endif
 
+#include "include/base/cef_cxx17_backports.h"
 #include "include/internal/cef_string_types.h"
 
 namespace cef {
@@ -182,7 +183,6 @@ LogMessage::LogMessage(const char* file,
 }
 
 LogMessage::~LogMessage() {
-  stream_ << std::endl;
   std::string str_newline(stream_.str());
   cef_log(file_, line_, severity_, str_newline.c_str());
 }
@@ -210,7 +210,7 @@ std::string SystemErrorCodeToString(SystemErrorCode error_code) {
   char msgbuf[error_message_buffer_size];
   DWORD flags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
   DWORD len = FormatMessageA(flags, NULL, error_code, 0, msgbuf,
-                             arraysize(msgbuf), NULL);
+                             static_cast<DWORD>(base::size(msgbuf)), NULL);
   std::stringstream ss;
   if (len) {
     std::string s(msgbuf);
@@ -253,14 +253,16 @@ ErrnoLogMessage::~ErrnoLogMessage() {
 }
 #endif  // OS_WIN
 
-std::ostream& operator<<(std::ostream& out, const wchar_t* wstr) {
-  cef_string_utf8_t str = {0};
-  std::wstring tmp_str(wstr);
-  cef_string_wide_to_utf8(wstr, tmp_str.size(), &str);
-  out << str.str;
-  cef_string_utf8_clear(&str);
-  return out;
-}
-
 }  // namespace logging
 }  // namespace cef
+
+std::ostream& operator<<(std::ostream& out, const wchar_t* wstr) {
+  std::wstring tmp_str(wstr);
+  if (!tmp_str.empty()) {
+    cef_string_utf8_t str = {0};
+    cef_string_wide_to_utf8(wstr, tmp_str.size(), &str);
+    out << str.str;
+    cef_string_utf8_clear(&str);
+  }
+  return out;
+}

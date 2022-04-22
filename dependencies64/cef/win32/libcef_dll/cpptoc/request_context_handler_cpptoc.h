@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=76b7baa391ff175aa310678225b9a20b46ac103c$
+// $hash=eee4c56e63dbec7ee8fa2b515b53d274b90c0366$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_REQUEST_CONTEXT_HANDLER_CPPTOC_H_
@@ -20,9 +20,7 @@
 #error This file can be included wrapper-side only
 #endif
 
-#include "include/capi/cef_request_context_capi.h"
 #include "include/capi/cef_request_context_handler_capi.h"
-#include "include/cef_request_context.h"
 #include "include/cef_request_context_handler.h"
 #include "libcef_dll/cpptoc/cpptoc_ref_counted.h"
 
@@ -34,6 +32,7 @@ class CefRequestContextHandlerCppToC
                                  cef_request_context_handler_t> {
  public:
   CefRequestContextHandlerCppToC();
+  virtual ~CefRequestContextHandlerCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_REQUEST_CONTEXT_HANDLER_CPPTOC_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=57e588531e5b86a9290a506d37a4e4198a7dc26b$
+// $hash=6ad6a0fbc8d5de1c2cb88d782387091957306c09$
 //
 
 #include "libcef_dll/cpptoc/test/translator_test_scoped_client_child_cpptoc.h"
@@ -63,6 +63,11 @@ CefTranslatorTestScopedClientChildCppToC::
   GetStruct()->base.get_value = translator_test_scoped_client_child_get_value;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefTranslatorTestScopedClientChildCppToC::
+    ~CefTranslatorTestScopedClientChildCppToC() {}
+
 template <>
 CefOwnPtr<CefTranslatorTestScopedClientChild>
 CefCppToCScoped<CefTranslatorTestScopedClientChildCppToC,
@@ -82,16 +87,8 @@ CefCppToCScoped<CefTranslatorTestScopedClientChildCppToC,
     UnwrapDerivedRaw(CefWrapperType type,
                      cef_translator_test_scoped_client_child_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCScoped<
-    CefTranslatorTestScopedClientChildCppToC,
-    CefTranslatorTestScopedClientChild,
-    cef_translator_test_scoped_client_child_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

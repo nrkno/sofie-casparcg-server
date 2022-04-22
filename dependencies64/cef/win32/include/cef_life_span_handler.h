@@ -73,7 +73,10 @@ class CefLifeSpanHandler : public virtual CefBaseRefCounted {
   // |windowInfo| will be ignored if the parent browser is wrapped in a
   // CefBrowserView. Popup browser creation will be canceled if the parent
   // browser is destroyed before the popup browser creation completes (indicated
-  // by a call to OnAfterCreated for the popup browser).
+  // by a call to OnAfterCreated for the popup browser). The |extra_info|
+  // parameter provides an opportunity to specify extra information specific
+  // to the created popup browser that will be passed to
+  // CefRenderProcessHandler::OnBrowserCreated() in the render process.
   ///
   /*--cef(optional_param=target_url,optional_param=target_frame_name)--*/
   virtual bool OnBeforePopup(CefRefPtr<CefBrowser> browser,
@@ -86,13 +89,16 @@ class CefLifeSpanHandler : public virtual CefBaseRefCounted {
                              CefWindowInfo& windowInfo,
                              CefRefPtr<CefClient>& client,
                              CefBrowserSettings& settings,
+                             CefRefPtr<CefDictionaryValue>& extra_info,
                              bool* no_javascript_access) {
     return false;
   }
 
   ///
-  // Called after a new browser is created. This callback will be the first
-  // notification that references |browser|.
+  // Called after a new browser is created. It is now safe to begin performing
+  // actions with |browser|. CefFrameHandler callbacks related to initial main
+  // frame creation will arrive before this callback. See CefFrameHandler
+  // documentation for additional usage information.
   ///
   /*--cef()--*/
   virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) {}
@@ -191,9 +197,14 @@ class CefLifeSpanHandler : public virtual CefBaseRefCounted {
   ///
   // Called just before a browser is destroyed. Release all references to the
   // browser object and do not attempt to execute any methods on the browser
-  // object after this callback returns. This callback will be the last
-  // notification that references |browser|. See DoClose() documentation for
-  // additional usage information.
+  // object (other than IsValid, GetIdentifier or IsSame) after this callback
+  // returns. CefFrameHandler callbacks related to final main frame destruction
+  // will arrive after this callback and CefBrowser::IsValid will return false
+  // at that time. Any in-progress network requests associated with |browser|
+  // will be aborted when the browser is destroyed, and
+  // CefResourceRequestHandler callbacks related to those requests may still
+  // arrive on the IO thread after this callback. See CefFrameHandler and
+  // DoClose() documentation for additional usage information.
   ///
   /*--cef()--*/
   virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) {}

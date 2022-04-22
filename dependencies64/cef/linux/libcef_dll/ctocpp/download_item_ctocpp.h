@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=42dc048935bf9eaec585df882a933c644d771c72$
+// $hash=ea3a9e840594e7dc8cd36f8b122d95c0050b9d25$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_DOWNLOAD_ITEM_CTOCPP_H_
@@ -31,25 +31,26 @@ class CefDownloadItemCToCpp : public CefCToCppRefCounted<CefDownloadItemCToCpp,
                                                          cef_download_item_t> {
  public:
   CefDownloadItemCToCpp();
+  virtual ~CefDownloadItemCToCpp();
 
   // CefDownloadItem methods.
-  bool IsValid() OVERRIDE;
-  bool IsInProgress() OVERRIDE;
-  bool IsComplete() OVERRIDE;
-  bool IsCanceled() OVERRIDE;
-  int64 GetCurrentSpeed() OVERRIDE;
-  int GetPercentComplete() OVERRIDE;
-  int64 GetTotalBytes() OVERRIDE;
-  int64 GetReceivedBytes() OVERRIDE;
-  CefTime GetStartTime() OVERRIDE;
-  CefTime GetEndTime() OVERRIDE;
-  CefString GetFullPath() OVERRIDE;
-  uint32 GetId() OVERRIDE;
-  CefString GetURL() OVERRIDE;
-  CefString GetOriginalUrl() OVERRIDE;
-  CefString GetSuggestedFileName() OVERRIDE;
-  CefString GetContentDisposition() OVERRIDE;
-  CefString GetMimeType() OVERRIDE;
+  bool IsValid() override;
+  bool IsInProgress() override;
+  bool IsComplete() override;
+  bool IsCanceled() override;
+  int64 GetCurrentSpeed() override;
+  int GetPercentComplete() override;
+  int64 GetTotalBytes() override;
+  int64 GetReceivedBytes() override;
+  CefTime GetStartTime() override;
+  CefTime GetEndTime() override;
+  CefString GetFullPath() override;
+  uint32 GetId() override;
+  CefString GetURL() override;
+  CefString GetOriginalUrl() override;
+  CefString GetSuggestedFileName() override;
+  CefString GetContentDisposition() override;
+  CefString GetMimeType() override;
 };
 
 #endif  // CEF_LIBCEF_DLL_CTOCPP_DOWNLOAD_ITEM_CTOCPP_H_

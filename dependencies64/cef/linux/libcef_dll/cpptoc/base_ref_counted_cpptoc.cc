@@ -13,16 +13,8 @@ CefRefPtr<CefBaseRefCounted> CefCppToCRefCounted<
     cef_base_ref_counted_t>::UnwrapDerived(CefWrapperType type,
                                            cef_base_ref_counted_t* s) {
   NOTREACHED();
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefBaseRefCountedCppToC,
-                                         CefBaseRefCounted,
-                                         cef_base_ref_counted_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefBaseRefCountedCppToC,

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Marshall A. Greenblatt. All rights reserved.
+// Copyright (c) 2021 Marshall A. Greenblatt. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@
 // by hand. See the translator.README.txt file in the tools directory for
 // more information.
 //
-// $hash=a1648c803a6d72e004e523cd4c02530702635d1e$
+// $hash=e44bb89a337942c82bfa246275b4b033821b2782$
 //
 
 #ifndef CEF_INCLUDE_CAPI_CEF_LIFE_SPAN_HANDLER_CAPI_H_
@@ -80,7 +80,10 @@ typedef struct _cef_life_span_handler_t {
   // modifications to |windowInfo| will be ignored if the parent browser is
   // wrapped in a cef_browser_view_t. Popup browser creation will be canceled if
   // the parent browser is destroyed before the popup browser creation completes
-  // (indicated by a call to OnAfterCreated for the popup browser).
+  // (indicated by a call to OnAfterCreated for the popup browser). The
+  // |extra_info| parameter provides an opportunity to specify extra information
+  // specific to the created popup browser that will be passed to
+  // cef_render_process_handler_t::on_browser_created() in the render process.
   ///
   int(CEF_CALLBACK* on_before_popup)(
       struct _cef_life_span_handler_t* self,
@@ -94,11 +97,14 @@ typedef struct _cef_life_span_handler_t {
       struct _cef_window_info_t* windowInfo,
       struct _cef_client_t** client,
       struct _cef_browser_settings_t* settings,
+      struct _cef_dictionary_value_t** extra_info,
       int* no_javascript_access);
 
   ///
-  // Called after a new browser is created. This callback will be the first
-  // notification that references |browser|.
+  // Called after a new browser is created. It is now safe to begin performing
+  // actions with |browser|. cef_frame_handler_t callbacks related to initial
+  // main frame creation will arrive before this callback. See
+  // cef_frame_handler_t documentation for additional usage information.
   ///
   void(CEF_CALLBACK* on_after_created)(struct _cef_life_span_handler_t* self,
                                        struct _cef_browser_t* browser);
@@ -198,9 +204,14 @@ typedef struct _cef_life_span_handler_t {
   ///
   // Called just before a browser is destroyed. Release all references to the
   // browser object and do not attempt to execute any functions on the browser
-  // object after this callback returns. This callback will be the last
-  // notification that references |browser|. See do_close() documentation for
-  // additional usage information.
+  // object (other than IsValid, GetIdentifier or IsSame) after this callback
+  // returns. cef_frame_handler_t callbacks related to final main frame
+  // destruction will arrive after this callback and cef_browser_t::IsValid will
+  // return false (0) at that time. Any in-progress network requests associated
+  // with |browser| will be aborted when the browser is destroyed, and
+  // cef_resource_request_handler_t callbacks related to those requests may
+  // still arrive on the IO thread after this callback. See cef_frame_handler_t
+  // and do_close() documentation for additional usage information.
   ///
   void(CEF_CALLBACK* on_before_close)(struct _cef_life_span_handler_t* self,
                                       struct _cef_browser_t* browser);

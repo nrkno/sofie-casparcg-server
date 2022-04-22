@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=0539b94d6141f5ae563ed29e835a58721cbce76b$
+// $hash=65e0e380522652b9b6a24d2da247db99d52ca6a5$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_DOMDOCUMENT_CTOCPP_H_
@@ -31,22 +31,23 @@ class CefDOMDocumentCToCpp : public CefCToCppRefCounted<CefDOMDocumentCToCpp,
                                                         cef_domdocument_t> {
  public:
   CefDOMDocumentCToCpp();
+  virtual ~CefDOMDocumentCToCpp();
 
   // CefDOMDocument methods.
-  Type GetType() OVERRIDE;
-  CefRefPtr<CefDOMNode> GetDocument() OVERRIDE;
-  CefRefPtr<CefDOMNode> GetBody() OVERRIDE;
-  CefRefPtr<CefDOMNode> GetHead() OVERRIDE;
-  CefString GetTitle() OVERRIDE;
-  CefRefPtr<CefDOMNode> GetElementById(const CefString& id) OVERRIDE;
-  CefRefPtr<CefDOMNode> GetFocusedNode() OVERRIDE;
-  bool HasSelection() OVERRIDE;
-  int GetSelectionStartOffset() OVERRIDE;
-  int GetSelectionEndOffset() OVERRIDE;
-  CefString GetSelectionAsMarkup() OVERRIDE;
-  CefString GetSelectionAsText() OVERRIDE;
-  CefString GetBaseURL() OVERRIDE;
-  CefString GetCompleteURL(const CefString& partialURL) OVERRIDE;
+  Type GetType() override;
+  CefRefPtr<CefDOMNode> GetDocument() override;
+  CefRefPtr<CefDOMNode> GetBody() override;
+  CefRefPtr<CefDOMNode> GetHead() override;
+  CefString GetTitle() override;
+  CefRefPtr<CefDOMNode> GetElementById(const CefString& id) override;
+  CefRefPtr<CefDOMNode> GetFocusedNode() override;
+  bool HasSelection() override;
+  int GetSelectionStartOffset() override;
+  int GetSelectionEndOffset() override;
+  CefString GetSelectionAsMarkup() override;
+  CefString GetSelectionAsText() override;
+  CefString GetBaseURL() override;
+  CefString GetCompleteURL(const CefString& partialURL) override;
 };
 
 #endif  // CEF_LIBCEF_DLL_CTOCPP_DOMDOCUMENT_CTOCPP_H_

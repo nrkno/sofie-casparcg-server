@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=ad375d5c311806aa03a3ba6704f5da15d41c814a$
+// $hash=49e74e666689969a5accd5ab3a99e2f0341a9664$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_MENU_MODEL_DELEGATE_CPPTOC_H_
@@ -34,6 +34,7 @@ class CefMenuModelDelegateCppToC
                                  cef_menu_model_delegate_t> {
  public:
   CefMenuModelDelegateCppToC();
+  virtual ~CefMenuModelDelegateCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_MENU_MODEL_DELEGATE_CPPTOC_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=b72bd1cba6b34f471bb678c04cf6d1978b2481eb$
+// $hash=b6eff8c6efe30c1d3e310342c710bae76f018cb6$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_V8CONTEXT_CTOCPP_H_
@@ -31,21 +31,22 @@ class CefV8ContextCToCpp : public CefCToCppRefCounted<CefV8ContextCToCpp,
                                                       cef_v8context_t> {
  public:
   CefV8ContextCToCpp();
+  virtual ~CefV8ContextCToCpp();
 
   // CefV8Context methods.
-  CefRefPtr<CefTaskRunner> GetTaskRunner() OVERRIDE;
-  bool IsValid() OVERRIDE;
-  CefRefPtr<CefBrowser> GetBrowser() OVERRIDE;
-  CefRefPtr<CefFrame> GetFrame() OVERRIDE;
-  CefRefPtr<CefV8Value> GetGlobal() OVERRIDE;
-  bool Enter() OVERRIDE;
-  bool Exit() OVERRIDE;
-  bool IsSame(CefRefPtr<CefV8Context> that) OVERRIDE;
+  CefRefPtr<CefTaskRunner> GetTaskRunner() override;
+  bool IsValid() override;
+  CefRefPtr<CefBrowser> GetBrowser() override;
+  CefRefPtr<CefFrame> GetFrame() override;
+  CefRefPtr<CefV8Value> GetGlobal() override;
+  bool Enter() override;
+  bool Exit() override;
+  bool IsSame(CefRefPtr<CefV8Context> that) override;
   bool Eval(const CefString& code,
             const CefString& script_url,
             int start_line,
             CefRefPtr<CefV8Value>& retval,
-            CefRefPtr<CefV8Exception>& exception) OVERRIDE;
+            CefRefPtr<CefV8Exception>& exception) override;
 };
 
 #endif  // CEF_LIBCEF_DLL_CTOCPP_V8CONTEXT_CTOCPP_H_

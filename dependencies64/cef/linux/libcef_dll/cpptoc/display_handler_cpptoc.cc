@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,12 +9,13 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=07ae3c3e3960a9dce5b6186173f76f765c564bc8$
+// $hash=caf5dead1197de40a4038520f33e48739949d4a0$
 //
 
 #include "libcef_dll/cpptoc/display_handler_cpptoc.h"
 #include "libcef_dll/ctocpp/browser_ctocpp.h"
 #include "libcef_dll/ctocpp/frame_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 #include "libcef_dll/transfer_util.h"
 
 namespace {
@@ -26,6 +27,8 @@ display_handler_on_address_change(struct _cef_display_handler_t* self,
                                   cef_browser_t* browser,
                                   struct _cef_frame_t* frame,
                                   const cef_string_t* url) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -54,6 +57,8 @@ void CEF_CALLBACK
 display_handler_on_title_change(struct _cef_display_handler_t* self,
                                 cef_browser_t* browser,
                                 const cef_string_t* title) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -74,6 +79,8 @@ void CEF_CALLBACK
 display_handler_on_favicon_urlchange(struct _cef_display_handler_t* self,
                                      cef_browser_t* browser,
                                      cef_string_list_t icon_urls) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -98,6 +105,8 @@ void CEF_CALLBACK
 display_handler_on_fullscreen_mode_change(struct _cef_display_handler_t* self,
                                           cef_browser_t* browser,
                                           int fullscreen) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -116,6 +125,8 @@ display_handler_on_fullscreen_mode_change(struct _cef_display_handler_t* self,
 int CEF_CALLBACK display_handler_on_tooltip(struct _cef_display_handler_t* self,
                                             cef_browser_t* browser,
                                             cef_string_t* text) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -142,6 +153,8 @@ void CEF_CALLBACK
 display_handler_on_status_message(struct _cef_display_handler_t* self,
                                   cef_browser_t* browser,
                                   const cef_string_t* value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -165,6 +178,8 @@ display_handler_on_console_message(struct _cef_display_handler_t* self,
                                    const cef_string_t* message,
                                    const cef_string_t* source,
                                    int line) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -189,6 +204,8 @@ int CEF_CALLBACK
 display_handler_on_auto_resize(struct _cef_display_handler_t* self,
                                cef_browser_t* browser,
                                const cef_size_t* new_size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -218,6 +235,8 @@ void CEF_CALLBACK
 display_handler_on_loading_progress_change(struct _cef_display_handler_t* self,
                                            cef_browser_t* browser,
                                            double progress) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -231,6 +250,41 @@ display_handler_on_loading_progress_change(struct _cef_display_handler_t* self,
   // Execute
   CefDisplayHandlerCppToC::Get(self)->OnLoadingProgressChange(
       CefBrowserCToCpp::Wrap(browser), progress);
+}
+
+int CEF_CALLBACK display_handler_on_cursor_change(
+    struct _cef_display_handler_t* self,
+    cef_browser_t* browser,
+    cef_cursor_handle_t cursor,
+    cef_cursor_type_t type,
+    const struct _cef_cursor_info_t* custom_cursor_info) {
+  shutdown_checker::AssertNotShutdown();
+
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return 0;
+  // Verify param: browser; type: refptr_diff
+  DCHECK(browser);
+  if (!browser)
+    return 0;
+  // Verify param: custom_cursor_info; type: struct_byref_const
+  DCHECK(custom_cursor_info);
+  if (!custom_cursor_info)
+    return 0;
+
+  // Translate param: custom_cursor_info; type: struct_byref_const
+  CefCursorInfo custom_cursor_infoObj;
+  if (custom_cursor_info)
+    custom_cursor_infoObj.Set(*custom_cursor_info, false);
+
+  // Execute
+  bool _retval = CefDisplayHandlerCppToC::Get(self)->OnCursorChange(
+      CefBrowserCToCpp::Wrap(browser), cursor, type, custom_cursor_infoObj);
+
+  // Return type: bool
+  return _retval;
 }
 
 }  // namespace
@@ -249,6 +303,13 @@ CefDisplayHandlerCppToC::CefDisplayHandlerCppToC() {
   GetStruct()->on_auto_resize = display_handler_on_auto_resize;
   GetStruct()->on_loading_progress_change =
       display_handler_on_loading_progress_change;
+  GetStruct()->on_cursor_change = display_handler_on_cursor_change;
+}
+
+// DESTRUCTOR - Do not edit by hand.
+
+CefDisplayHandlerCppToC::~CefDisplayHandlerCppToC() {
+  shutdown_checker::AssertNotShutdown();
 }
 
 template <>
@@ -258,16 +319,8 @@ CefRefPtr<CefDisplayHandler> CefCppToCRefCounted<
     cef_display_handler_t>::UnwrapDerived(CefWrapperType type,
                                           cef_display_handler_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefDisplayHandlerCppToC,
-                                         CefDisplayHandler,
-                                         cef_display_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefDisplayHandlerCppToC,

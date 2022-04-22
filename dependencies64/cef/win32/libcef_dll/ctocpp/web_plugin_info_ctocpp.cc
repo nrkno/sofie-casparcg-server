@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,14 +9,17 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=45a48d5d97bd0239b2af24e1527211c89d5dec78$
+// $hash=1ba28481accff89ed45808c7bf4ea45f58ad4bfb$
 //
 
 #include "libcef_dll/ctocpp/web_plugin_info_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall") CefString CefWebPluginInfoCToCpp::GetName() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_web_plugin_info_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_name))
     return CefString();
@@ -33,6 +36,8 @@ NO_SANITIZE("cfi-icall") CefString CefWebPluginInfoCToCpp::GetName() {
 }
 
 NO_SANITIZE("cfi-icall") CefString CefWebPluginInfoCToCpp::GetPath() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_web_plugin_info_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_path))
     return CefString();
@@ -49,6 +54,8 @@ NO_SANITIZE("cfi-icall") CefString CefWebPluginInfoCToCpp::GetPath() {
 }
 
 NO_SANITIZE("cfi-icall") CefString CefWebPluginInfoCToCpp::GetVersion() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_web_plugin_info_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_version))
     return CefString();
@@ -65,6 +72,8 @@ NO_SANITIZE("cfi-icall") CefString CefWebPluginInfoCToCpp::GetVersion() {
 }
 
 NO_SANITIZE("cfi-icall") CefString CefWebPluginInfoCToCpp::GetDescription() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_web_plugin_info_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_description))
     return CefString();
@@ -84,6 +93,12 @@ NO_SANITIZE("cfi-icall") CefString CefWebPluginInfoCToCpp::GetDescription() {
 
 CefWebPluginInfoCToCpp::CefWebPluginInfoCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefWebPluginInfoCToCpp::~CefWebPluginInfoCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_web_plugin_info_t*
 CefCToCppRefCounted<CefWebPluginInfoCToCpp,
@@ -91,16 +106,8 @@ CefCToCppRefCounted<CefWebPluginInfoCToCpp,
                     cef_web_plugin_info_t>::UnwrapDerived(CefWrapperType type,
                                                           CefWebPluginInfo* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefWebPluginInfoCToCpp,
-                                         CefWebPluginInfo,
-                                         cef_web_plugin_info_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefWebPluginInfoCToCpp,

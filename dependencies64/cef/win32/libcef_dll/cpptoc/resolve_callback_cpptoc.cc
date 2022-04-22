@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=0736a907753bbb95634bcecf7415b5dce8a79a86$
+// $hash=52c60d1a07505b36d99272e58c1b362b03a2af45$
 //
 
 #include "libcef_dll/cpptoc/resolve_callback_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 #include "libcef_dll/transfer_util.h"
 
 namespace {
@@ -23,6 +24,8 @@ void CEF_CALLBACK
 resolve_callback_on_resolve_completed(struct _cef_resolve_callback_t* self,
                                       cef_errorcode_t result,
                                       cef_string_list_t resolved_ips) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -47,6 +50,12 @@ CefResolveCallbackCppToC::CefResolveCallbackCppToC() {
   GetStruct()->on_resolve_completed = resolve_callback_on_resolve_completed;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefResolveCallbackCppToC::~CefResolveCallbackCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefResolveCallback> CefCppToCRefCounted<
     CefResolveCallbackCppToC,
@@ -54,16 +63,8 @@ CefRefPtr<CefResolveCallback> CefCppToCRefCounted<
     cef_resolve_callback_t>::UnwrapDerived(CefWrapperType type,
                                            cef_resolve_callback_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefResolveCallbackCppToC,
-                                         CefResolveCallback,
-                                         cef_resolve_callback_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefResolveCallbackCppToC,

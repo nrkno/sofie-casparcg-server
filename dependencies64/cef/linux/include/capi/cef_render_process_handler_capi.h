@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Marshall A. Greenblatt. All rights reserved.
+// Copyright (c) 2021 Marshall A. Greenblatt. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@
 // by hand. See the translator.README.txt file in the tools directory for
 // more information.
 //
-// $hash=63544b02e263d0aeb2f6553bf40c52bcf72d9f0b$
+// $hash=4ebf99611a11cc8714d710c37417fbd9f50f0618$
 //
 
 #ifndef CEF_INCLUDE_CAPI_CEF_RENDER_PROCESS_HANDLER_CAPI_H_
@@ -65,16 +65,6 @@ typedef struct _cef_render_process_handler_t {
   cef_base_ref_counted_t base;
 
   ///
-  // Called after the render process main thread has been created. |extra_info|
-  // is a read-only value originating from
-  // cef_browser_process_handler_t::on_render_process_thread_created(). Do not
-  // keep a reference to |extra_info| outside of this function.
-  ///
-  void(CEF_CALLBACK* on_render_thread_created)(
-      struct _cef_render_process_handler_t* self,
-      struct _cef_list_value_t* extra_info);
-
-  ///
   // Called after WebKit has been initialized.
   ///
   void(CEF_CALLBACK* on_web_kit_initialized)(
@@ -83,11 +73,16 @@ typedef struct _cef_render_process_handler_t {
   ///
   // Called after a browser has been created. When browsing cross-origin a new
   // browser will be created before the old browser with the same identifier is
-  // destroyed.
+  // destroyed. |extra_info| is an optional read-only value originating from
+  // cef_browser_host_t::cef_browser_host_create_browser(),
+  // cef_browser_host_t::cef_browser_host_create_browser_sync(),
+  // cef_life_span_handler_t::on_before_popup() or
+  // cef_browser_view_t::cef_browser_view_create().
   ///
   void(CEF_CALLBACK* on_browser_created)(
       struct _cef_render_process_handler_t* self,
-      struct _cef_browser_t* browser);
+      struct _cef_browser_t* browser,
+      struct _cef_dictionary_value_t* extra_info);
 
   ///
   // Called before a browser is destroyed.
@@ -155,12 +150,13 @@ typedef struct _cef_render_process_handler_t {
 
   ///
   // Called when a new message is received from a different process. Return true
-  // (1) if the message was handled or false (0) otherwise. Do not keep a
-  // reference to or attempt to access the message outside of this callback.
+  // (1) if the message was handled or false (0) otherwise. It is safe to keep a
+  // reference to |message| outside of this callback.
   ///
   int(CEF_CALLBACK* on_process_message_received)(
       struct _cef_render_process_handler_t* self,
       struct _cef_browser_t* browser,
+      struct _cef_frame_t* frame,
       cef_process_id_t source_process,
       struct _cef_process_message_t* message);
 } cef_render_process_handler_t;

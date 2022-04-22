@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=6edef25453e4214f5e5fcc0ab6e8d52ff79a937f$
+// $hash=aa7440de70e2a83ba939fd4f9ae12e2dd6b80873$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_VIEWS_PANEL_DELEGATE_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefPanelDelegateCppToC
                                  cef_panel_delegate_t> {
  public:
   CefPanelDelegateCppToC();
+  virtual ~CefPanelDelegateCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_VIEWS_PANEL_DELEGATE_CPPTOC_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Marshall A. Greenblatt. All rights reserved.
+// Copyright (c) 2021 Marshall A. Greenblatt. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@
 // by hand. See the translator.README.txt file in the tools directory for
 // more information.
 //
-// $hash=c499099d6f628e58d2eed207537817758161af5d$
+// $hash=3e4eb9ed3a0cb28ae0459a50f20c8405c7722437$
 //
 
 #ifndef CEF_INCLUDE_CAPI_VIEWS_CEF_BROWSER_VIEW_CAPI_H_
@@ -66,6 +66,17 @@ typedef struct _cef_browser_view_t {
       struct _cef_browser_view_t* self);
 
   ///
+  // Returns the Chrome toolbar associated with this BrowserView. Only supported
+  // when using the Chrome runtime. The cef_browser_view_delegate_t::
+  // get_chrome_toolbar_type() function must return a value other than
+  // CEF_CTT_NONE and the toolbar will not be available until after this
+  // BrowserView is added to a cef_window_t and
+  // cef_view_delegate_t::on_window_changed() has been called.
+  ///
+  struct _cef_view_t*(CEF_CALLBACK* get_chrome_toolbar)(
+      struct _cef_browser_view_t* self);
+
+  ///
   // Sets whether accelerators registered with cef_window_t::SetAccelerator are
   // triggered before or after the event is sent to the cef_browser_t. If
   // |prefer_accelerators| is true (1) then the matching accelerator will be
@@ -80,12 +91,16 @@ typedef struct _cef_browser_view_t {
 
 ///
 // Create a new BrowserView. The underlying cef_browser_t will not be created
-// until this view is added to the views hierarchy.
+// until this view is added to the views hierarchy. The optional |extra_info|
+// parameter provides an opportunity to specify extra information specific to
+// the created browser that will be passed to
+// cef_render_process_handler_t::on_browser_created() in the render process.
 ///
 CEF_EXPORT cef_browser_view_t* cef_browser_view_create(
     struct _cef_client_t* client,
     const cef_string_t* url,
     const struct _cef_browser_settings_t* settings,
+    struct _cef_dictionary_value_t* extra_info,
     struct _cef_request_context_t* request_context,
     struct _cef_browser_view_delegate_t* delegate);
 

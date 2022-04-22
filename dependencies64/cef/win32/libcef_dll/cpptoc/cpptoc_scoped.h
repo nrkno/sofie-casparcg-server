@@ -10,7 +10,6 @@
 #include "include/base/cef_macros.h"
 #include "include/capi/cef_base_capi.h"
 #include "include/cef_base.h"
-#include "libcef_dll/ptr_util.h"
 #include "libcef_dll/wrapper_types.h"
 
 // Wrap a C++ class with a C structure. This is used when the class
@@ -34,7 +33,7 @@ class CefCppToCScoped : public CefBaseScoped {
   // }
   static StructName* WrapOwn(CefOwnPtr<BaseName> c) {
     if (!c)
-      return NULL;
+      return nullptr;
 
     // Wrap our object with the CefCppToC class.
     ClassName* wrapper = new ClassName();
@@ -97,7 +96,7 @@ class CefCppToCScoped : public CefBaseScoped {
     // We're giving up ownership of the underlying object. Clear the pointer so
     // it doesn't get deleted.
     BaseName* object = wrapperStruct->object_;
-    wrapperStruct->object_ = NULL;
+    wrapperStruct->object_ = nullptr;
 
     delete wrapperStruct->wrapper_;
 
@@ -114,7 +113,7 @@ class CefCppToCScoped : public CefBaseScoped {
   // }
   static CefRawPtr<BaseName> UnwrapRaw(StructName* s) {
     if (!s)
-      return NULL;
+      return nullptr;
 
     // Cast our structure to the wrapper structure type.
     WrapperStruct* wrapperStruct = GetWrapperStruct(s);
@@ -154,30 +153,17 @@ class CefCppToCScoped : public CefBaseScoped {
   // call UnderlyingRelease() on the wrapping CefCToCpp object.
   StructName* GetStruct() { return &wrapper_struct_.struct_; }
 
-#if DCHECK_IS_ON()
-  // Simple tracking of allocated objects.
-  static base::AtomicRefCount DebugObjCt;
-#endif
-
  protected:
   CefCppToCScoped() {
     wrapper_struct_.type_ = kWrapperType;
     wrapper_struct_.wrapper_ = this;
     memset(GetStruct(), 0, sizeof(StructName));
-
-#if DCHECK_IS_ON()
-    base::AtomicRefCountInc(&DebugObjCt);
-#endif
   }
 
   virtual ~CefCppToCScoped() {
     // Only delete the underlying object if we own it.
     if (owned_ && wrapper_struct_.object_)
       delete wrapper_struct_.object_;
-
-#if DCHECK_IS_ON()
-    base::AtomicRefCountDec(&DebugObjCt);
-#endif
   }
 
  private:

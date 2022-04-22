@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=480c684fd32d5f20061f2d991512bea0c3b64c36$
+// $hash=c3ec7ad3ed23359659a1089e38b2f658193034ca$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_VIEWS_BOX_LAYOUT_CTOCPP_H_
@@ -33,15 +33,16 @@ class CefBoxLayoutCToCpp : public CefCToCppRefCounted<CefBoxLayoutCToCpp,
                                                       cef_box_layout_t> {
  public:
   CefBoxLayoutCToCpp();
+  virtual ~CefBoxLayoutCToCpp();
 
   // CefBoxLayout methods.
-  void SetFlexForView(CefRefPtr<CefView> view, int flex) OVERRIDE;
-  void ClearFlexForView(CefRefPtr<CefView> view) OVERRIDE;
+  void SetFlexForView(CefRefPtr<CefView> view, int flex) override;
+  void ClearFlexForView(CefRefPtr<CefView> view) override;
 
   // CefLayout methods.
-  CefRefPtr<CefBoxLayout> AsBoxLayout() OVERRIDE;
-  CefRefPtr<CefFillLayout> AsFillLayout() OVERRIDE;
-  bool IsValid() OVERRIDE;
+  CefRefPtr<CefBoxLayout> AsBoxLayout() override;
+  CefRefPtr<CefFillLayout> AsFillLayout() override;
+  bool IsValid() override;
 };
 
 #endif  // CEF_LIBCEF_DLL_CTOCPP_VIEWS_BOX_LAYOUT_CTOCPP_H_

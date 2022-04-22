@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2021 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,12 +9,13 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=b907849cab5f5cdad0cde846fefd817cf038b689$
+// $hash=7b4c1790884bfd1c7df2b912a6891523d1ce46a2$
 //
 
 #include "libcef_dll/cpptoc/load_handler_cpptoc.h"
 #include "libcef_dll/ctocpp/browser_ctocpp.h"
 #include "libcef_dll/ctocpp/frame_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -26,6 +27,8 @@ load_handler_on_loading_state_change(struct _cef_load_handler_t* self,
                                      int isLoading,
                                      int canGoBack,
                                      int canGoForward) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -47,6 +50,8 @@ load_handler_on_load_start(struct _cef_load_handler_t* self,
                            cef_browser_t* browser,
                            cef_frame_t* frame,
                            cef_transition_type_t transition_type) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -71,6 +76,8 @@ void CEF_CALLBACK load_handler_on_load_end(struct _cef_load_handler_t* self,
                                            cef_browser_t* browser,
                                            cef_frame_t* frame,
                                            int httpStatusCode) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -97,6 +104,8 @@ void CEF_CALLBACK load_handler_on_load_error(struct _cef_load_handler_t* self,
                                              cef_errorcode_t errorCode,
                                              const cef_string_t* errorText,
                                              const cef_string_t* failedUrl) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -133,21 +142,19 @@ CefLoadHandlerCppToC::CefLoadHandlerCppToC() {
   GetStruct()->on_load_error = load_handler_on_load_error;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefLoadHandlerCppToC::~CefLoadHandlerCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefLoadHandler>
 CefCppToCRefCounted<CefLoadHandlerCppToC, CefLoadHandler, cef_load_handler_t>::
     UnwrapDerived(CefWrapperType type, cef_load_handler_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefLoadHandlerCppToC,
-                                         CefLoadHandler,
-                                         cef_load_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefLoadHandlerCppToC,
