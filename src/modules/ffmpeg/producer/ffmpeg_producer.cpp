@@ -70,6 +70,7 @@ struct ffmpeg_producer : public core::frame_producer
                              std::wstring                         vfilter,
                              std::wstring                         afilter,
                              boost::optional<int64_t>             start,
+                             boost::optional<int64_t>             seek,
                              boost::optional<int64_t>             duration,
                              boost::optional<bool>                loop,
                              int                                  seekable)
@@ -83,6 +84,7 @@ struct ffmpeg_producer : public core::frame_producer
                                    u8(vfilter),
                                    u8(afilter),
                                    start,
+                                   seek,
                                    duration,
                                    loop,
                                    seekable))
@@ -319,8 +321,13 @@ spl::shared_ptr<core::frame_producer> create_producer(const core::frame_producer
 
     auto loop = contains_param(L"LOOP", params);
 
-    auto in = get_param(L"SEEK", params, static_cast<uint32_t>(0)); // compatibility
-    in      = get_param(L"IN", params, in);
+    auto seek = get_param(L"SEEK", params, static_cast<uint32_t>(0));
+    auto in   = get_param(L"IN", params, seek);
+
+    if (!contains_param(L"SEEK", params)) {
+        // Default to the same when only one is defined
+        seek = in;
+    }
 
     auto out = get_param(L"LENGTH", params, std::numeric_limits<uint32_t>::max());
     if (out < std::numeric_limits<uint32_t>::max() - in)
@@ -336,10 +343,14 @@ spl::shared_ptr<core::frame_producer> create_producer(const core::frame_producer
     boost::ireplace_all(filter_str, L"DEINTERLACE", L"YADIF=0:-1");
 
     boost::optional<std::int64_t> start;
+    boost::optional<std::int64_t> seek2;
     boost::optional<std::int64_t> duration;
 
     if (in != 0) {
         start = in;
+    }
+    if (seek != 0) {
+        seek2 = seek;
     }
 
     if (out != std::numeric_limits<uint32_t>::max()) {
@@ -351,8 +362,17 @@ spl::shared_ptr<core::frame_producer> create_producer(const core::frame_producer
     auto afilter = boost::to_lower_copy(get_param(L"AF", params, get_param(L"FILTER", params, L"")));
 
     try {
-        auto producer = spl::make_shared<ffmpeg_producer>(
-            dependencies.frame_factory, dependencies.format_desc, name, path, vfilter, afilter, start, duration, loop, seekable);
+        auto producer = spl::make_shared<ffmpeg_producer>(dependencies.frame_factory,
+                                                          dependencies.format_desc,
+                                                          name,
+                                                          path,
+                                                          vfilter,
+                                                          afilter,
+                                                          start,
+                                                          seek2,
+                                                          duration,
+                                                          loop,
+                                                          seekable);
         return core::create_destroy_proxy(std::move(producer));
     } catch (...) {
         CASPAR_LOG_CURRENT_EXCEPTION();
