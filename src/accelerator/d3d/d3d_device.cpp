@@ -16,6 +16,7 @@
 #include <GL/glew.h>
 #include <GL/wglew.h>
 
+#include <atlcomcli.h>
 #include <mutex>
 #include <atlcomcli.h>
 
