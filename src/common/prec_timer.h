@@ -38,6 +38,8 @@ class prec_timer
     // http://www.geisswerks.com/ryan/FAQS/timing.html
     void tick_nanos(int64_t interval);
 
+    void reset();
+
   private:
     int64_t time_;
 };

@@ -55,6 +55,7 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <common/prec_timer.h>
 
 namespace caspar { namespace decklink {
 
@@ -324,6 +325,8 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
     std::atomic<int64_t>                scheduled_frames_completed_{0};
     std::unique_ptr<key_video_context>  key_context_;
 
+    prec_timer interlace_timer_;
+
     com_ptr<IDeckLinkDisplayMode> mode_ =
         get_display_mode(output_, format_desc_.format, bmdFormat8BitBGRA, bmdVideoOutputFlagDefault);
     int field_count_ = mode_->GetFieldDominance() != bmdProgressiveFrame ? 2 : 1;
@@ -332,15 +335,20 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
 
     bool doFrame(std::shared_ptr<void>& image_data, std::vector<std::int32_t>& audio_data, bool topField)
     {
-        core::const_frame frame(pop());
+        core::const_frame frame = pop();
         if (abort_request_)
             return false;
 
+        // No point copying an empty frame
+        if (!frame)
+            return true;
+
         int firstLine = topField ? 0 : 1;
-        for (auto y = firstLine; y < format_desc_.height; y += field_count_) {
-            std::memcpy(reinterpret_cast<char*>(image_data.get()) + (long long)y * format_desc_.width * 4,
-                        frame.image_data(0).data() + (long long)y * format_desc_.width * 4,
-                        (size_t)format_desc_.width * 4);
+        long long stride    = format_desc_.width * 4;
+        auto      dest_ptr = reinterpret_cast<char*>(image_data.get());
+        auto      src_ptr   = frame.image_data(0).data();
+        for (long long y = firstLine; y < format_desc_.height; y += field_count_) {
+            std::memcpy(dest_ptr + y * stride, src_ptr + y * stride, stride);
         }
         audio_data.insert(audio_data.end(), frame.audio_data().begin(), frame.audio_data().end());
 
@@ -488,8 +496,7 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
             // The tick_timer will run at frame (2x field) rate. If the tick_timer has been delayed because the machine
             // is busy this calculation reduces the delay before the second field so that it lands at the expected time,
             // giving the channel the full amount of time to process the following frame.
-            std::chrono::high_resolution_clock::time_point f2TimePoint =
-                std::chrono::high_resolution_clock::now() +
+            std::chrono::milliseconds f2SleepMs =
                 std::chrono::milliseconds(std::max<int>(
                     0, std::min<int>(fieldTimeMs, fieldTimeMs + static_cast<int>(2.0 * fieldTimeMs - elapsed))));
 
@@ -539,8 +546,12 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
                 if (!doFrame(image_data, audio_data, mode_->GetFieldDominance() == bmdUpperFieldFirst))
                     return E_FAIL;
 
-                // Wait to pull frame for second field...
-                std::this_thread::sleep_until(f2TimePoint);
+                {
+                    // Wait to pull frame for second field...
+                    // std::thread::sleep_until is too inaccurate for this
+                    interlace_timer_.reset();
+                    interlace_timer_.tick_millis(f2SleepMs.count());
+                }
 
                 tick_time = tick_timer_.elapsed() * format_desc_.fps * 0.5;
                 graph_->set_value("tick-time-f2", tick_time);
@@ -710,7 +721,7 @@ struct decklink_consumer_proxy : public core::frame_consumer
 
     int index() const override { return 300 + config_.device_index; }
 
-    bool has_synchronization_clock() const override { return true; }
+     bool has_synchronization_clock() const override { return true; }
 };
 
 spl::shared_ptr<core::frame_consumer> create_consumer(const std::vector<std::wstring>&                  params,

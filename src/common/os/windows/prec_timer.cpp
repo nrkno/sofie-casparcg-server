@@ -34,6 +34,10 @@ prec_timer::prec_timer()
 {
 }
 
+void prec_timer::reset() {
+    time_ = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count();
+}
+
 void prec_timer::tick_nanos(int64_t ticks_to_wait)
 {
     auto t = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count();
