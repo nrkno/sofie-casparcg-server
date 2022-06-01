@@ -260,6 +260,7 @@ public:
             abort_ = true;
             buffer_cond_.notify_all();
             worker_.wait();
+            CASPAR_LOG(debug) << L"ffmpeg_producer complete";
         }
 
 	// frame_producer
@@ -652,7 +653,7 @@ public:
 		{
 			do
 			{
-				if (!muxer_->video_ready() && video_decoder_)
+				if (!muxer_->video_ready() && video_decoder_ )
 				{
 					video = video_decoder_->poll();
 					if (video)
@@ -660,7 +661,7 @@ public:
 				}
 				else
 					break;
-			} while (!video_decoder_->empty());
+			} while (!video_decoder_->empty() && !abort_);
 		},
 		[&]
 		{
@@ -675,6 +676,9 @@ public:
 				}
 			}
 		});
+		
+		if (abort_)
+            return false;
 
 		muxer_->push(video);
 		muxer_->push(audio);
@@ -686,6 +690,9 @@ public:
 			else if (!muxer_->audio_ready())
 				muxer_->push({ empty_audio() });
 		}
+        
+		if (abort_)
+            return false;
 
 		if (!video_decoder_)
 		{
@@ -700,6 +707,9 @@ public:
 
                 bool got_frame = false;
 		for (auto frame = muxer_->poll(); frame != core::draw_frame::empty(); frame = muxer_->poll()) {
+                    if (abort_)
+                        break;
+
                     if (frame != core::draw_frame::empty()) {
                         got_frame = true;
                         boost::unique_lock<boost::mutex> buffer_lock(buffer_mutex_);
