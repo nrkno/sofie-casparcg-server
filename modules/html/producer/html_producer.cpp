@@ -145,7 +145,10 @@ public:
 	core::draw_frame receive()
 	{
 		auto frame = last_frame();
-		executor_.begin_invoke([&]{ update(); });
+        
+		if (!is_removed())
+            executor_.begin_invoke([&] { update(); });
+		
 		return frame;
 	}
 
@@ -193,12 +196,17 @@ public:
 	}
 
 	void close()
-	{
+    {
+        removed_ = true;
+        executor_.clear();
+
 		html::invoke([=]
 		{
 			if (browser_ != nullptr)
 			{
+                CASPAR_LOG(error) << L"html_client::close closing";
 				browser_->GetHost()->CloseBrowser(true);
+                CASPAR_LOG(error) << L"html_client::close closed";
 			}
 		});
 	}
@@ -206,7 +214,6 @@ public:
 	void remove()
 	{
 		close();
-		removed_ = true;
 	}
 
 	bool is_removed() const
@@ -231,7 +238,7 @@ private:
 			int width,
 			int height)
 	{
-        if (shared_texture_enable_)
+        if (shared_texture_enable_ || is_removed())
             return;
 
 		graph_->set_value("browser-tick-time", paint_timer_.elapsed()
@@ -272,7 +279,7 @@ private:
                             void*                 shared_handle) override
     {
         try {
-            if (!shared_texture_enable_)
+            if (!shared_texture_enable_ || is_removed())
                 return;
 
 			graph_->set_value("browser-tick-time", paint_timer_.elapsed()
@@ -335,8 +342,12 @@ private:
 	{
 		CASPAR_ASSERT(CefCurrentlyOn(TID_UI));
 
+		CASPAR_LOG(error) << L"OnBeforeClose cleaning up";
+
 		removed_ = true;
 		browser_ = nullptr;
+
+        CASPAR_LOG(error) << L"OnBeforeClose cleaned up";
 	}
 
 	bool DoClose(CefRefPtr<CefBrowser> browser) override
@@ -420,7 +431,10 @@ private:
 	}
 
 	void invoke_requested_animation_frames()
-	{
+    {
+        if (is_removed())
+            return;
+
 		if (browser_)
 			browser_->SendProcessMessage(
 					CefProcessId::PID_RENDERER,
@@ -450,8 +464,11 @@ private:
 		}
 	}
 
-	void update()
+	void update() 
 	{
+        if (is_removed())
+            return;
+
 		invoke_requested_animation_frames();
 
 		const bool is_interlaced = format_desc_.field_mode != core::field_mode::progressive;
@@ -569,8 +586,8 @@ public:
 
 	~html_producer()
 	{
-		if (client_)
-			client_->close();
+        if (client_) 
+            client_->close();
 	}
 
 	// frame_producer

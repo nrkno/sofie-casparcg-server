@@ -244,7 +244,6 @@ std::shared_ptr<executor>& producer_destroyer()
         result->set_capacity(std::numeric_limits<unsigned int>::max());
         return result;
     }();
-    ;
 
     return destroyer;
 }
@@ -289,8 +288,10 @@ class destroy_producer_proxy : public frame_producer
         auto producer = new spl::shared_ptr<frame_producer>(std::move(producer_));
 
         destroyer->begin_invoke([=] {
+
             std::unique_ptr<spl::shared_ptr<frame_producer>> pointer_guard(producer);
             auto                                             str = (*producer)->print();
+
             try {
                 if (!producer->unique())
                     CASPAR_LOG(debug) << str << L" Not destroyed on asynchronous destruction thread: "
