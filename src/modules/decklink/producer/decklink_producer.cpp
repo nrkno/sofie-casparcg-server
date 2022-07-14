@@ -296,6 +296,7 @@ class decklink_producer : public IDeckLinkInputCallback
     core::video_format_desc              format_desc_;
     std::vector<int>                     audio_cadence_ = format_desc_.audio_cadence;
     spl::shared_ptr<core::frame_factory> frame_factory_;
+    const core::video_format_repository  format_repository_;
 
     double in_sync_  = 0.0;
     double out_sync_ = 0.0;
@@ -322,6 +323,7 @@ class decklink_producer : public IDeckLinkInputCallback
     decklink_producer(const core::video_format_desc&              format_desc,
                       int                                         device_index,
                       const spl::shared_ptr<core::frame_factory>& frame_factory,
+                      const core::video_format_repository&        format_repository, 
                       const std::string&                          vfilter,
                       const std::string&                          afilter,
                       const std::wstring&                         format,
@@ -329,6 +331,7 @@ class decklink_producer : public IDeckLinkInputCallback
         : device_index_(device_index)
         , format_desc_(format_desc)
         , frame_factory_(frame_factory)
+        , format_repository_(format_repository)
         , freeze_on_lost_(freeze_on_lost)
         , input_format(format_desc_)
         , vfilter_(vfilter)
@@ -336,7 +339,7 @@ class decklink_producer : public IDeckLinkInputCallback
     {
         // use user-provided format if available, or choose the channel's output format
         if (!format.empty()) {
-            input_format = core::video_format_desc(format);
+            input_format = format_repository.find(format);
         }
 
         mode_         = get_display_mode(input_, input_format.format, bmdFormat8BitYUV, bmdVideoOutputFlagDefault);
@@ -413,7 +416,7 @@ class decklink_producer : public IDeckLinkInputCallback
             auto newMode = newDisplayMode->GetDisplayMode();
             auto fmt     = get_caspar_video_format(newMode);
 
-            auto new_fmt = core::video_format_desc(fmt);
+            auto new_fmt = format_repository_.find_format(fmt);
 
             CASPAR_LOG(info) << print() << L" Input format changed from " << input_format.name << L" to "
                              << new_fmt.name;
@@ -672,6 +675,7 @@ class decklink_producer_proxy : public core::frame_producer
   public:
     explicit decklink_producer_proxy(const core::video_format_desc&              format_desc,
                                      const spl::shared_ptr<core::frame_factory>& frame_factory,
+                                     const core::video_format_repository&        format_repository, 
                                      int                                         device_index,
                                      const std::string&                          vfilter,
                                      const std::string&                          afilter,
@@ -686,7 +690,7 @@ class decklink_producer_proxy : public core::frame_producer
             core::diagnostics::call_context::for_thread() = ctx;
             com_initialize();
             producer_.reset(new decklink_producer(
-                format_desc, device_index, frame_factory, vfilter, afilter, format, freeze_on_lost));
+                format_desc, device_index, frame_factory, format_repository, vfilter, afilter, format, freeze_on_lost));
         });
     }
 
@@ -743,6 +747,7 @@ spl::shared_ptr<core::frame_producer> create_producer(const core::frame_producer
 
     auto producer = spl::make_shared<decklink_producer_proxy>(dependencies.format_desc,
                                                               dependencies.frame_factory,
+                                                              dependencies.format_repository,
                                                               device_index,
                                                               u8(vfilter),
                                                               u8(afilter),
