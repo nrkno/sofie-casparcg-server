@@ -327,6 +327,10 @@ class html_client
             if (type != PET_VIEW)
                 return;
 
+            if (new_texture) {
+                CASPAR_LOG(debug) << print() << " new texture!";
+            }
+
             if (new_texture && d3d_shared_buffer_) {
                 d3d_shared_buffer_.reset();
             }
@@ -550,7 +554,7 @@ class html_producer : public core::frame_producer
             window_info.bounds.width                 = format_desc.square_width;
             window_info.bounds.height                = format_desc.square_height;
             window_info.windowless_rendering_enabled = true;
-            window_info.shared_texture_enabled = shared_texture_enable;
+            window_info.shared_texture_enabled       = shared_texture_enable;
 
             CefBrowserSettings browser_settings;
             browser_settings.webgl = enable_gpu ? cef_state_t::STATE_ENABLED : cef_state_t::STATE_DISABLED;
