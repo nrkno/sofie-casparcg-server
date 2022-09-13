@@ -12,7 +12,6 @@ if (ENABLE_HTML)
 endif ()
 
 if (MSVC)
-	add_subdirectory(flash)
 	add_subdirectory(bluefish)
 endif()
 

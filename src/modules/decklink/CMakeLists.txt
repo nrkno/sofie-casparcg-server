@@ -73,6 +73,8 @@ if (MSVC)
 			common
 			core
 			ffmpeg
+
+			comsuppw
 	)
 else()
 	target_link_libraries(decklink

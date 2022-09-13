@@ -139,11 +139,6 @@ link_directories("${NUGET_PACKAGES_FOLDER}/native.freeimage.vc140.3.17.0/build/n
 casparcg_add_runtime_dependency("${FREEIMAGE_BIN_PATH}/FreeImage.dll")
 casparcg_add_runtime_dependency("${FREEIMAGE_BIN_PATH}/FreeImaged.dll")
 
-#ZLIB
-set(ZLIB_INCLUDE_PATH "${NUGET_PACKAGES_FOLDER}/zlib-msvc-x64.1.2.11.8900/build/native/include")
-link_directories("${NUGET_PACKAGES_FOLDER}/zlib-msvc-x64.1.2.11.8900/build/native/lib_release")
-link_directories("${NUGET_PACKAGES_FOLDER}/zlib-msvc-x64.1.2.11.8900/build/native/lib_debug")
-
 # OPENAL
 set(OPENAL_INCLUDE_PATH "${PACKAGES_FOLDER}/openal/include")
 set(OPENAL_BIN_PATH "${PACKAGES_FOLDER}/openal/bin/win32")
