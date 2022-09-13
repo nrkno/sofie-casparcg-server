@@ -321,7 +321,7 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
     std::mutex                    buffer_mutex_;
     std::condition_variable       buffer_cond_;
     std::queue<core::const_frame> buffer_;
-    int                           buffer_capacity_ = 1;
+    int                           buffer_capacity_ = channel_format_desc_.field_count;
 
     const int buffer_size_ = config_.buffer_depth(); // Minimum buffer-size 3.
 
@@ -335,8 +335,6 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
     reference_signal_detector           reference_signal_detector_{output_};
     std::atomic<int64_t>                scheduled_frames_completed_{0};
     std::unique_ptr<key_video_context>  key_context_;
-
-    prec_timer interlace_timer_;
 
     com_ptr<IDeckLinkDisplayMode> mode_ =
         get_display_mode(output_, decklink_format_desc_.format, bmdFormat8BitBGRA, bmdVideoOutputFlagDefault);
@@ -480,10 +478,6 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
         graph_->set_color("buffered-audio", diagnostics::color(0.9f, 0.9f, 0.5f));
         graph_->set_color("buffered-video", diagnostics::color(0.2f, 0.9f, 0.9f));
 
-        if (mode_->GetFieldDominance() != bmdProgressiveFrame) {
-            graph_->set_color("tick-time-f2", diagnostics::color(0.9f, 0.6f, 0.0f));
-        }
-
         if (key_context_) {
             graph_->set_color("key-offset", diagnostics::color(1.0f, 0.0f, 0.0f));
         }
@@ -598,16 +592,7 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
             //set_thread_realtime_priority();
         }
         try {
-            auto elapsed     = tick_timer_.elapsed();
-            int  fieldTimeMs = static_cast<int>(1000 / decklink_format_desc_.fps);
-            // Calculate a time point for when a simulated second field action should occur for interlaced standards.
-            // The tick_timer will run at frame (2x field) rate. If the tick_timer has been delayed because the machine
-            // is busy this calculation reduces the delay before the second field so that it lands at the expected time,
-            // giving the channel the full amount of time to process the following frame.
-            std::chrono::milliseconds f2SleepMs = std::chrono::milliseconds(std::max<int>(
-                0, std::min<int>(fieldTimeMs, fieldTimeMs + static_cast<int>(2.0 * fieldTimeMs - elapsed))));
-
-            auto tick_time = elapsed * decklink_format_desc_.fps / decklink_format_desc_.field_count * 0.5;
+            auto tick_time = tick_timer_.elapsed() * decklink_format_desc_.hz * 0.5;
             graph_->set_value("tick-time", tick_time);
             tick_timer_.restart();
 
@@ -653,16 +638,6 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
             if (mode_->GetFieldDominance() != bmdProgressiveFrame) {
                 if (!doFrame(image_data, audio_data, mode_->GetFieldDominance() == bmdUpperFieldFirst))
                     return E_FAIL;
-
-                {
-                    // Wait to pull frame for second field...
-                    // std::thread::sleep_until is too inaccurate for this
-                    interlace_timer_.reset();
-                    interlace_timer_.tick_millis(f2SleepMs.count());
-                }
-
-                tick_time = tick_timer_.elapsed() * decklink_format_desc_.fps * 0.5;
-                graph_->set_value("tick-time-f2", tick_time);
 
                 if (!doFrame(image_data, audio_data, mode_->GetFieldDominance() != bmdUpperFieldFirst))
                     return E_FAIL;
@@ -757,7 +732,7 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
         video_scheduled_ += decklink_format_desc_.duration;
     }
 
-    bool send(core::const_frame frame)
+    bool send(core::video_field field, core::const_frame frame)
     {
         {
             std::lock_guard<std::mutex> lock(exception_mutex_);
@@ -768,7 +743,10 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
 
         if (frame) {
             std::unique_lock<std::mutex> lock(buffer_mutex_);
-            buffer_cond_.wait(lock, [&] { return buffer_.size() < buffer_capacity_ || abort_request_; });
+            if (field != core::video_field::b) {
+                // Always push a field2, as we have supplied field1
+                buffer_cond_.wait(lock, [&] { return buffer_.size() < buffer_capacity_ || abort_request_; });
+            }
             buffer_.push(std::move(frame));
         }
         buffer_cond_.notify_all();
@@ -824,9 +802,9 @@ struct decklink_consumer_proxy : public core::frame_consumer
         });
     }
 
-    std::future<bool> send(core::const_frame frame) override
+    std::future<bool> send(core::video_field field, core::const_frame frame) override
     {
-        return executor_.begin_invoke([=] { return consumer_->send(frame); });
+        return executor_.begin_invoke([=] { return consumer_->send(field, frame); });
     }
 
     std::wstring print() const override { return consumer_ ? consumer_->print() : L"[decklink_consumer]"; }
