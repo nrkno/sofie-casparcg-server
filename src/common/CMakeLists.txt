@@ -19,14 +19,12 @@ if (MSVC)
 			compiler/vs/disable_silly_warnings.h
 
 			os/windows/filesystem.cpp
-			os/windows/prec_timer.cpp
 			os/windows/thread.cpp
 			os/windows/windows.h
 	)
 else ()
 	set(OS_SPECIFIC_SOURCES
 			os/linux/filesystem.cpp
-			os/linux/prec_timer.cpp
 			os/linux/thread.cpp
 	)
 endif ()
@@ -53,7 +51,6 @@ set(HEADERS
 		memory.h
 		memshfl.h
 		param.h
-		prec_timer.h
 		ptree.h
 		scope_exit.h
 		stdafx.h
