@@ -157,10 +157,9 @@ struct video_channel::impl final
                     auto mixed_frame = mixer_(stage_frames.frames, stage_frames.format_desc, stage_frames.nb_samples);
                     auto mixed_frame2 =
                         stage_frames.format_desc.field_count == 2
-                                            ? mixer_(stage_frames.frames2 , stage_frames.format_desc, stage_frames.nb_samples)
+                            ? mixer_(stage_frames.frames2, stage_frames.format_desc, stage_frames.nb_samples)
                             : const_frame{};
                     graph_->set_value("mix-time", mix_timer.elapsed() * format_desc.hz * 0.5);
-
 
                     // Consume
                     caspar::timer consume_timer;
@@ -174,8 +173,8 @@ struct video_channel::impl final
                     state["mixer"]       = mixer_.state();
                     state["output"]      = output_.state();
                     state["framerate"]   = {stage_frames.format_desc.framerate.numerator() *
-                                              stage_frames.format_desc.field_count,
-                                          stage_frames.format_desc.framerate.denominator()};
+                                                stage_frames.format_desc.field_count,
+                                            stage_frames.format_desc.framerate.denominator()};
                     state_               = state;
 
                     caspar::timer osc_timer;

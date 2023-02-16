@@ -44,7 +44,7 @@ class AMCPProtocolStrategy : public IO::IProtocolStrategy
     struct impl;
     spl::unique_ptr<impl> impl_;
 
-    AMCPProtocolStrategy(const AMCPProtocolStrategy&) = delete;
+    AMCPProtocolStrategy(const AMCPProtocolStrategy&)            = delete;
     AMCPProtocolStrategy& operator=(const AMCPProtocolStrategy&) = delete;
 };
 

@@ -111,7 +111,7 @@ struct server::impl
     spl::shared_ptr<core::frame_consumer_registry>     consumer_registry_;
     std::function<void(bool)>                          shutdown_server_now_;
 
-    impl(const impl&) = delete;
+    impl(const impl&)            = delete;
     impl& operator=(const impl&) = delete;
 
     explicit impl(std::function<void(bool)> shutdown_server_now)
@@ -232,16 +232,8 @@ struct server::impl
                     cadence_sum += c;
                 }
 
-                const auto new_format = video_format_desc(video_format::custom,
-                                                          field_count,
-                                                          width,
-                                                          height,
-                                                          width,
-                                                          height,
-                                                          timescale,
-                                                          duration,
-                                                          id,
-                                                          cadence);
+                const auto new_format = video_format_desc(
+                    video_format::custom, field_count, width, height, width, height, timescale, duration, id, cadence);
                 // TODO: verify cadence_sum to look correct
 
                 const auto existing = video_format_repository_.find(id);
@@ -252,7 +244,6 @@ struct server::impl
             }
         }
     }
-
 
     std::vector<boost::property_tree::wptree> setup_channels(const boost::property_tree::wptree& pt)
     {

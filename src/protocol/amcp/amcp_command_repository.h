@@ -69,7 +69,7 @@ class amcp_command_repository
     struct impl;
     spl::shared_ptr<impl> impl_;
 
-    amcp_command_repository(const amcp_command_repository&) = delete;
+    amcp_command_repository(const amcp_command_repository&)            = delete;
     amcp_command_repository& operator=(const amcp_command_repository&) = delete;
 };
 

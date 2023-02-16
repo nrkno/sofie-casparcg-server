@@ -111,8 +111,11 @@ class destroy_consumer_proxy : public frame_consumer
         }).detach();
     }
 
-    std::future<bool> send(const core::video_field field, const_frame frame) override { return consumer_->send(field, std::move(frame)); }
-    void              initialize(const video_format_desc& format_desc, int channel_index) override
+    std::future<bool> send(const core::video_field field, const_frame frame) override
+    {
+        return consumer_->send(field, std::move(frame));
+    }
+    void initialize(const video_format_desc& format_desc, int channel_index) override
     {
         return consumer_->initialize(format_desc, channel_index);
     }
@@ -145,7 +148,7 @@ class print_consumer_proxy : public frame_consumer
     {
         return consumer_->send(field, std::move(frame));
     }
-    void              initialize(const video_format_desc& format_desc, int channel_index) override
+    void initialize(const video_format_desc& format_desc, int channel_index) override
     {
         consumer_->initialize(format_desc, channel_index);
         CASPAR_LOG(info) << consumer_->print() << L" Initialized.";
@@ -159,7 +162,7 @@ class print_consumer_proxy : public frame_consumer
 
 spl::shared_ptr<core::frame_consumer>
 frame_consumer_registry::create_consumer(const std::vector<std::wstring>&            params,
-                                         const core::video_format_repository&        format_repository, 
+                                         const core::video_format_repository&        format_repository,
                                          std::vector<spl::shared_ptr<video_channel>> channels) const
 {
     if (params.empty())
@@ -185,7 +188,7 @@ frame_consumer_registry::create_consumer(const std::vector<std::wstring>&       
 spl::shared_ptr<frame_consumer>
 frame_consumer_registry::create_consumer(const std::wstring&                         element_name,
                                          const boost::property_tree::wptree&         element,
-                                         const core::video_format_repository&        format_repository, 
+                                         const core::video_format_repository&        format_repository,
                                          std::vector<spl::shared_ptr<video_channel>> channels) const
 {
     auto& preconfigured_consumer_factories = impl_->preconfigured_consumer_factories;

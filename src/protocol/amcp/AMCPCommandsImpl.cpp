@@ -29,8 +29,8 @@
 
 #include "../util/http_request.h"
 #include "AMCPCommandQueue.h"
-#include "amcp_command_repository.h"
 #include "amcp_args.h"
+#include "amcp_command_repository.h"
 
 #include <common/env.h>
 
@@ -217,7 +217,6 @@ core::frame_producer_dependencies get_producer_dependencies(const std::shared_pt
                                              ctx.cg_registry);
 }
 
-
 bool try_match_sting(const std::vector<std::wstring>& params, sting_info& stingInfo)
 {
     auto match = std::find_if(params.begin(), params.end(), param_comparer(L"STING"));
@@ -315,7 +314,8 @@ std::wstring loadbg_command(command_context& ctx)
             transition_producer = create_transition_producer(pFP, transitionInfo);
         }
 
-        // TODO - we should pass the format into load(), so that we can catch it having changed since the producer was initialised
+        // TODO - we should pass the format into load(), so that we can catch it having changed since the producer was
+        // initialised
         channel->stage().load(ctx.layer_index(), transition_producer, false, auto_play); // TODO: LOOP
     } catch (file_not_found&) {
         if (contains_param(L"CLEAR_ON_404", ctx.parameters)) {
@@ -410,7 +410,6 @@ std::wstring clear_all_command(command_context& ctx)
     return L"202 CLEAR ALL OK\r\n";
 }
 
-
 std::wstring call_command(command_context& ctx)
 {
     auto result = ctx.channel.channel->stage().call(ctx.layer_index(), ctx.parameters).get();
@@ -478,7 +477,8 @@ std::wstring remove_command(command_context& ctx)
             return L"402 REMOVE FAILED\r\n";
         }
 
-        index = ctx.consumer_registry->create_consumer(ctx.parameters, ctx.format_repository, get_channels(ctx))->index();
+        index =
+            ctx.consumer_registry->create_consumer(ctx.parameters, ctx.format_repository, get_channels(ctx))->index();
     }
 
     if (!ctx.channel.channel->output().remove(index)) {

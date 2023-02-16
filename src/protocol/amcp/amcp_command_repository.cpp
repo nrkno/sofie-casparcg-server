@@ -242,7 +242,12 @@ amcp_command_repository::amcp_command_repository(
     const spl::shared_ptr<const core::frame_consumer_registry>& consumer_registry,
     const std::weak_ptr<accelerator::accelerator_device>&       ogl_device,
     std::function<void(bool)>                                   shutdown_server_now)
-    : impl_(new impl(format_repository,cg_registry, producer_registry, consumer_registry, ogl_device, shutdown_server_now))
+    : impl_(new impl(format_repository,
+                     cg_registry,
+                     producer_registry,
+                     consumer_registry,
+                     ogl_device,
+                     shutdown_server_now))
 {
 }
 
