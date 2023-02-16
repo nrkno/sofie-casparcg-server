@@ -77,12 +77,12 @@ class video_channel final
 
     core::monitor::state state() const;
 
-    const core::stage&  stage() const;
-    core::stage&        stage();
-    const core::mixer&  mixer() const;
-    core::mixer&        mixer();
-    const core::output& output() const;
-    core::output&       output();
+    const std::shared_ptr<core::stage>& stage() const;
+    std::shared_ptr<core::stage>&       stage();
+    const core::mixer&                  mixer() const;
+    core::mixer&                        mixer();
+    const core::output&                 output() const;
+    core::output&                       output();
 
     spl::shared_ptr<core::frame_factory> frame_factory();
 
