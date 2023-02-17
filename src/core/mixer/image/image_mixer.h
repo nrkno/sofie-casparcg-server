@@ -52,8 +52,7 @@ class image_mixer
 #ifdef WIN32
     class const_frame import_d3d_texture(const void*                                             tag,
                                          const std::shared_ptr<accelerator::d3d::d3d_texture2d>& d3d_texture,
-                                         bool                                                    vflip,
-                                         core::pixel_format                                      format) override = 0;
+                                         bool                                                    vflip) override = 0;
 #endif
 };
 
