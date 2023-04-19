@@ -1,5 +1,12 @@
-CasparCG 2.4.0 (Unreleased) 
+CasparCG 2.4.0 NRK RC
 ==========================================
+
+## NRK Specific Changes
+This matches the current state of upstream CasparCG as of 19-04-2023, with the following changes
+
+* Revert CEF update due to frames being lost
+* Remove Flash Producer
+* Remove CII and CLK protocols
 
 ### Core
 ##### Improvements
@@ -30,7 +37,6 @@ CasparCG 2.4.0 (Unreleased)
 * FFmpeg: Update to v5.1
 * FFmpeg: Improve performance
 * FFmpeg: Allow specifying both SEEK and IN for PLAY commands
-* HTML: Update to CEF 95
 * HTML: `CALL 1-10 RELOAD` to reload a renderer
 * NDI: Upgrade to NDI5
 ##### Fixes

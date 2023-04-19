@@ -1,4 +1,4 @@
-CasparCG Server
+CasparCG Server (Sofie-specific fork of CasparCG Server)
 ===============
 
 Thank you for your interest in CasparCG Server, a professional software used to
@@ -20,7 +20,7 @@ System Requirements
 
 ### Linux
 
- - Ubuntu 20.04 and 22.04 are supported
+ - Ubuntu 22.04 are supported
 
 Getting Started
 ---------------
@@ -29,21 +29,8 @@ Getting Started
    Alternatively, newer testing versions can be downloaded from (http://builds.casparcg.com) or [built from source](BUILDING.md)
 
 2. Install any optional non-GPL modules
-    - Flash template support (Windows only):
 
-    1. Uninstall any previous version of the Adobe Flash Player using this file:
-        (http://download.macromedia.com/get/flashplayer/current/support/uninstall_flash_player.exe)
-
-    2. Download and unpack
-        (http://download.macromedia.com/pub/flashplayer/installers/archive/fp_11.8.800.94_archive.zip)
-
-    3. Install Adobe Flash Player 11.8.800.94 from the unpacked archive:
-        fp_11.8.800.94_archive\11_8_r800_94\flashplayer11_8r800_94_winax.exe
-
-    - For NewTek iVGA support (Windows only), please download and install the iVGA driver from (http://new.tk/NetworkSendRedist)
-
-3. Configure the server by editing the self-documented "casparcg.config" file in
-   a text editor.
+3. Configure the server by editing the self-documented "casparcg.config" file in a text editor.
 
 4.
    1. Windows: start `casparcg_auto_restart.bat`, or `casparcg.exe` and `scanner.exe` separately.
@@ -73,11 +60,6 @@ export FONTCONFIG_PATH=/etc/fonts
 2. HTML producer throws "GTK theme error" message
 Install gnome-themes-standard package:
 sudo apt install gnome-themes-standard
-
-3. Error while loading libgcrypt.so.11
-Extract libgcrypt.so.11 and libgcrypt.so.11.8.2 to CasparCG lib/ directory.
-You can get it from:
-https://launchpad.net/ubuntu/+archive/primary/+files/libgcrypt11_1.5.3-2ubuntu4.2_amd64.deb
 
 4. Error while loading libcgmanager.so.0
 Install central cgroup manager daemon (client library):
