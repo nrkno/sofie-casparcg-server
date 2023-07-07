@@ -1,3 +1,10 @@
+CasparCG 2.4.0 NRK RC2
+==========================================
+
+### Core
+##### Fixes
+* LOAD command without parameters 
+
 CasparCG 2.4.0 NRK RC
 ==========================================
 
