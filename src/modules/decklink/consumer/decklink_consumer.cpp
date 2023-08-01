@@ -609,10 +609,26 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
             }
 
             if (result == bmdOutputFrameDisplayedLate) {
+                std::wstring str = print() + L" late scheduled=" + boost::lexical_cast<std::wstring>(video_scheduled_) + L"*";
+                BMDTimeValue timestamp = 0;
+                double speed = 0;
+                if (SUCCEEDED(output_->GetScheduledStreamTime(decklink_format_desc_.time_scale, &timestamp, &speed))) {
+                    str += L" decklink=" + boost::lexical_cast<std::wstring>(timestamp);
+                }
+                CASPAR_LOG(warning) << str;
+
                 graph_->set_tag(diagnostics::tag_severity::WARNING, "late-frame");
                 video_scheduled_ += decklink_format_desc_.duration;
                 audio_scheduled_ += dframe->nb_samples();
             } else if (result == bmdOutputFrameDropped) {
+                std::wstring str = print() + L" dropped scheduled=" + boost::lexical_cast<std::wstring>(video_scheduled_) + L"*";
+                BMDTimeValue timestamp = 0;
+                double speed = 0;
+                if (SUCCEEDED(output_->GetScheduledStreamTime(decklink_format_desc_.time_scale, &timestamp, &speed))) {
+                    str += L" decklink=" + boost::lexical_cast<std::wstring>(timestamp);
+                }
+                CASPAR_LOG(warning) << str;
+
                 graph_->set_tag(diagnostics::tag_severity::WARNING, "dropped-frame");
             } else if (result == bmdOutputFrameFlushed) {
                 graph_->set_tag(diagnostics::tag_severity::WARNING, "flushed-frame");
