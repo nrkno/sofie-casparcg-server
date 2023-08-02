@@ -1,6 +1,7 @@
+cmake_minimum_required (VERSION 3.16)
+
 # Determine build (target) platform
 INCLUDE (PlatformIntrospection)
-TEST_FOR_SUPPORTED_PLATFORM (SUPPORTED_PLATFORM)
 _DETERMINE_PLATFORM (CONFIG_PLATFORM)
 _DETERMINE_ARCH (CONFIG_ARCH)
 _DETERMINE_CPU_COUNT (CONFIG_CPU_COUNT)
@@ -21,17 +22,19 @@ ELSEIF (GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/../.git")
 	EXEC_PROGRAM ("${GIT_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/../" ARGS rev-parse --verify --short HEAD OUTPUT_VARIABLE CONFIG_VERSION_GIT_HASH)
 ENDIF ()
 
-SET (BOOST_ROOT_PATH "/opt/boost" CACHE STRING "Path to Boost")
-SET (ENV{BOOST_ROOT} "${BOOST_ROOT_PATH}")
 if (NOT USE_SYSTEM_BOOST)
+	SET (BOOST_ROOT_PATH "/opt/boost" CACHE STRING "Path to Boost")
+	SET (ENV{BOOST_ROOT} "${BOOST_ROOT_PATH}")
 	SET (Boost_USE_DEBUG_LIBS ON)
 	SET (Boost_USE_RELEASE_LIBS OFF)
 	SET (Boost_USE_STATIC_LIBS ON)
 endif()
-FIND_PACKAGE (Boost 1.66.0 COMPONENTS system thread chrono filesystem log locale regex date_time coroutine REQUIRED)
+FIND_PACKAGE (Boost 1.67.0 COMPONENTS system thread chrono filesystem log locale regex date_time coroutine REQUIRED)
 
-SET (FFMPEG_ROOT_PATH "/opt/ffmpeg/lib/pkgconfig" CACHE STRING "Path to FFMPEG")
-SET (ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${FFMPEG_ROOT_PATH}")
+if (NOT USE_SYSTEM_FFMPEG)
+	SET (FFMPEG_ROOT_PATH "/opt/ffmpeg/lib/pkgconfig" CACHE STRING "Path to FFMPEG")
+	SET (ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${FFMPEG_ROOT_PATH}")
+endif()
 FIND_PACKAGE (FFmpeg REQUIRED)
 LINK_DIRECTORIES( ${FFMPEG_LIBRARY_DIRS} )
 
@@ -69,6 +72,8 @@ ADD_DEFINITIONS (-D__NO_INLINE__) # Needed for precompiled headers to work
 ADD_DEFINITIONS (-DBOOST_NO_SWPRINTF) # swprintf on Linux seems to always use , as decimal point regardless of C-locale or C++-locale
 ADD_DEFINITIONS (-DTBB_USE_CAPTURED_EXCEPTION=1)
 ADD_DEFINITIONS (-DNDEBUG) # Needed for precompiled headers to work
+ADD_DEFINITIONS (-DBOOST_LOCALE_HIDE_AUTO_PTR) # Needed for C++17 in boost 1.67+
+
 
 if (USE_SYSTEM_BOOST)
 	ADD_DEFINITIONS (-DBOOST_ALL_DYN_LINK)
@@ -77,10 +82,13 @@ endif()
 IF (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
 	ADD_COMPILE_OPTIONS (-O3) # Needed for precompiled headers to work
 endif()
-ADD_COMPILE_OPTIONS (-std=c++14) # Needed for precompiled headers to work
-ADD_COMPILE_OPTIONS (-msse3)
-ADD_COMPILE_OPTIONS (-mssse3)
-ADD_COMPILE_OPTIONS (-msse4.1)
+IF (CONFIG_ARCH MATCHES "(i[3-6]86|x64|x86_64|amd64|e2k)")
+    ADD_COMPILE_OPTIONS (-msse3)
+    ADD_COMPILE_OPTIONS (-mssse3)
+    ADD_COMPILE_OPTIONS (-msse4.1)
+ELSE ()
+    ADD_COMPILE_DEFINITIONS (USE_SIMDE)
+ENDIF ()
 ADD_COMPILE_OPTIONS (-fnon-call-exceptions) # Allow signal handler to throw exception
 
 ADD_COMPILE_OPTIONS (-Wno-deprecated-declarations -Wno-write-strings -Wno-multichar -Wno-cpp -Werror)

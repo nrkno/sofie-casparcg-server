@@ -27,8 +27,6 @@
 #include "../decklink.h"
 #include "../util/util.h"
 
-#include "../decklink_api.h"
-
 #include <core/consumer/frame_consumer.h>
 #include <core/diagnostics/call_context.h>
 #include <core/frame/frame.h>
@@ -39,7 +37,6 @@
 #include <common/diagnostics/graph.h>
 #include <common/except.h>
 #include <common/executor.h>
-#include <common/future.h>
 #include <common/memshfl.h>
 #include <common/param.h>
 #include <common/timer.h>
@@ -47,15 +44,15 @@
 #include <tbb/scalable_allocator.h>
 
 #include <boost/circular_buffer.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/property_tree/ptree.hpp>
 
 #include <atomic>
 #include <condition_variable>
 #include <future>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <utility>
 
 namespace caspar { namespace decklink {
 
@@ -93,13 +90,13 @@ struct configuration
     bool      key_only          = false;
     int       base_buffer_depth = 3;
 
-    core::video_format format   = core::video_format::invalid;
-    int                src_x    = 0;
-    int                src_y    = 0;
-    int                dest_x   = 0;
-    int                dest_y   = 0;
-    int                region_w = 0;
-    int                region_h = 0;
+    core::video_format_desc format;
+    int                     src_x    = 0;
+    int                     src_y    = 0;
+    int                     dest_x   = 0;
+    int                     dest_y   = 0;
+    int                     region_w = 0;
+    int                     region_h = 0;
 
     int buffer_depth() const
     {
@@ -108,6 +105,11 @@ struct configuration
     }
 
     int key_device_index() const { return key_device_idx == 0 ? device_index + 1 : key_device_idx; }
+
+    bool has_subregion_geometry() const
+    {
+        return src_x != 0 || src_y != 0 || region_w != 0 || region_h != 0 || dest_x != 0 || dest_y != 0;
+    }
 };
 
 template <typename Configuration>
@@ -124,13 +126,53 @@ void set_latency(const com_iface_ptr<Configuration>& config,
     }
 }
 
-void set_duplex(const com_iface_ptr<IDeckLinkAttributes>&    attributes,
-                const com_iface_ptr<IDeckLinkConfiguration>& config,
-                configuration::duplex_t                      duplex,
-                const std::wstring&                          print)
+com_ptr<IDeckLinkDisplayMode> get_display_mode(const com_iface_ptr<IDeckLinkOutput>& device,
+                                               core::video_format                    fmt,
+                                               BMDPixelFormat                        pix_fmt,
+                                               BMDSupportedVideoModeFlags            flag)
+{
+    auto format = get_decklink_video_format(fmt);
+
+    IDeckLinkDisplayMode*         m = nullptr;
+    IDeckLinkDisplayModeIterator* iter;
+    if (SUCCEEDED(device->GetDisplayModeIterator(&iter))) {
+        auto iterator = wrap_raw<com_ptr>(iter, true);
+        while (SUCCEEDED(iterator->Next(&m)) && m != nullptr && m->GetDisplayMode() != format) {
+            m->Release();
+        }
+    }
+
+    if (!m)
+        CASPAR_THROW_EXCEPTION(user_error()
+                               << msg_info("Device could not find requested video-format: " + std::to_string(format)));
+
+    com_ptr<IDeckLinkDisplayMode> mode = wrap_raw<com_ptr>(m, true);
+
+    BMDDisplayMode actualMode = bmdModeUnknown;
+    BOOL           supported  = false;
+
+    if (FAILED(device->DoesSupportVideoMode(
+            bmdVideoConnectionUnspecified, mode->GetDisplayMode(), pix_fmt, flag, &actualMode, &supported)))
+        CASPAR_THROW_EXCEPTION(caspar_exception()
+                               << msg_info(L"Could not determine whether device supports requested video format: " +
+                                           get_mode_name(mode)));
+    else if (!supported)
+        CASPAR_LOG(info) << L"Device may not support video-format: " << get_mode_name(mode);
+    else if (actualMode != bmdModeUnknown)
+        CASPAR_LOG(warning) << L"Device supports video-format with conversion: " << get_mode_name(mode);
+
+    return mode;
+}
+
+void set_duplex(const com_iface_ptr<IDeckLinkAttributes_v10_11>&    attributes,
+                const com_iface_ptr<IDeckLinkConfiguration_v10_11>& config,
+                configuration::duplex_t                             duplex,
+                const std::wstring&                                 print)
 {
     BOOL supportsDuplexModeConfiguration;
-    if (FAILED(attributes->GetFlag(BMDDeckLinkSupportsDuplexModeConfiguration, &supportsDuplexModeConfiguration))) {
+    if (FAILED(
+            attributes->GetFlag(static_cast<BMDDeckLinkAttributeID>(BMDDeckLinkSupportsDuplexModeConfiguration_v10_11),
+                                &supportsDuplexModeConfiguration))) {
         CASPAR_LOG(error) << print
                           << L" Failed to set duplex mode, unable to check if card supports duplex mode setting.";
     };
@@ -140,23 +182,24 @@ void set_duplex(const com_iface_ptr<IDeckLinkAttributes>&    attributes,
         return;
     }
 
-    std::map<configuration::duplex_t, BMDDuplexMode> config_map{
-        {configuration::duplex_t::full_duplex, bmdDuplexModeFull},
-        {configuration::duplex_t::half_duplex, bmdDuplexModeHalf},
+    std::map<configuration::duplex_t, BMDDuplexMode_v10_11> config_map{
+        {configuration::duplex_t::full_duplex, bmdDuplexModeFull_v10_11},
+        {configuration::duplex_t::half_duplex, bmdDuplexModeHalf_v10_11},
     };
     auto duplex_mode = config_map[duplex];
 
-    if (FAILED(config->SetInt(bmdDeckLinkConfigDuplexMode, duplex_mode))) {
+    if (FAILED(
+            config->SetInt(static_cast<BMDDeckLinkConfigurationID>(bmdDeckLinkConfigDuplexMode_v10_11), duplex_mode))) {
         CASPAR_LOG(error) << print << L" Unable to set duplex mode.";
         return;
     }
     CASPAR_LOG(info) << print << L" Duplex mode set.";
 }
 
-void set_keyer(const com_iface_ptr<IDeckLinkAttributes>& attributes,
-               const com_iface_ptr<IDeckLinkKeyer>&      decklink_keyer,
-               configuration::keyer_t                    keyer,
-               const std::wstring&                       print)
+void set_keyer(const com_iface_ptr<IDeckLinkProfileAttributes>& attributes,
+               const com_iface_ptr<IDeckLinkKeyer>&             decklink_keyer,
+               configuration::keyer_t                           keyer,
+               const std::wstring&                              print)
 {
     if (keyer == configuration::keyer_t::internal_keyer) {
         BOOL value = true;
@@ -189,9 +232,9 @@ class decklink_frame : public IDeckLinkVideoFrame
     int                     nb_samples_;
 
   public:
-    decklink_frame(std::shared_ptr<void> data, const core::video_format_desc& format_desc, int nb_samples)
-        : format_desc_(format_desc)
-        , data_(data)
+    decklink_frame(std::shared_ptr<void> data, core::video_format_desc format_desc, int nb_samples)
+        : format_desc_(std::move(format_desc))
+        , data_(std::move(data))
         , nb_samples_(nb_samples)
     {
     }
@@ -217,7 +260,7 @@ class decklink_frame : public IDeckLinkVideoFrame
 
     long STDMETHODCALLTYPE           GetWidth() override { return static_cast<long>(format_desc_.width); }
     long STDMETHODCALLTYPE           GetHeight() override { return static_cast<long>(format_desc_.height); }
-    long STDMETHODCALLTYPE           GetRowBytes() override { return static_cast<long>(format_desc_.width * 4); }
+    long STDMETHODCALLTYPE           GetRowBytes() override { return static_cast<long>(format_desc_.width) * 4; }
     BMDPixelFormat STDMETHODCALLTYPE GetPixelFormat() override { return bmdFormat8BitBGRA; }
     BMDFrameFlags STDMETHODCALLTYPE  GetFlags() override { return bmdFrameFlagDefault; }
 
@@ -239,13 +282,13 @@ class decklink_frame : public IDeckLinkVideoFrame
 
 struct key_video_context : public IDeckLinkVideoOutputCallback
 {
-    const configuration                   config_;
-    com_ptr<IDeckLink>                    decklink_      = get_device(config_.key_device_index());
-    com_iface_ptr<IDeckLinkOutput>        output_        = iface_cast<IDeckLinkOutput>(decklink_);
-    com_iface_ptr<IDeckLinkKeyer>         keyer_         = iface_cast<IDeckLinkKeyer>(decklink_, true);
-    com_iface_ptr<IDeckLinkAttributes>    attributes_    = iface_cast<IDeckLinkAttributes>(decklink_);
-    com_iface_ptr<IDeckLinkConfiguration> configuration_ = iface_cast<IDeckLinkConfiguration>(decklink_);
-    std::atomic<int64_t>                  scheduled_frames_completed_;
+    const configuration                       config_;
+    com_ptr<IDeckLink>                        decklink_      = get_device(config_.key_device_index());
+    com_iface_ptr<IDeckLinkOutput>            output_        = iface_cast<IDeckLinkOutput>(decklink_);
+    com_iface_ptr<IDeckLinkKeyer>             keyer_         = iface_cast<IDeckLinkKeyer>(decklink_, true);
+    com_iface_ptr<IDeckLinkProfileAttributes> attributes_    = iface_cast<IDeckLinkProfileAttributes>(decklink_);
+    com_iface_ptr<IDeckLinkConfiguration>     configuration_ = iface_cast<IDeckLinkConfiguration>(decklink_);
+    std::atomic<int64_t>                      scheduled_frames_completed_ = {0};
 
     key_video_context(const configuration& config, const std::wstring& print)
         : config_(config)
@@ -273,7 +316,7 @@ struct key_video_context : public IDeckLinkVideoOutputCallback
                                    << boost::errinfo_api_function("SetScheduledFrameCompletionCallback"));
     }
 
-    virtual ~key_video_context()
+    ~key_video_context()
     {
         if (output_) {
             output_->StopScheduledPlayback(0, nullptr, 0);
@@ -304,11 +347,11 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
     const int                           channel_index_;
     const configuration                 config_;
 
-    com_ptr<IDeckLink>                    decklink_      = get_device(config_.device_index);
-    com_iface_ptr<IDeckLinkOutput>        output_        = iface_cast<IDeckLinkOutput>(decklink_);
-    com_iface_ptr<IDeckLinkConfiguration> configuration_ = iface_cast<IDeckLinkConfiguration>(decklink_);
-    com_iface_ptr<IDeckLinkKeyer>         keyer_         = iface_cast<IDeckLinkKeyer>(decklink_, true);
-    com_iface_ptr<IDeckLinkAttributes>    attributes_    = iface_cast<IDeckLinkAttributes>(decklink_);
+    com_ptr<IDeckLink>                        decklink_      = get_device(config_.device_index);
+    com_iface_ptr<IDeckLinkOutput>            output_        = iface_cast<IDeckLinkOutput>(decklink_);
+    com_iface_ptr<IDeckLinkConfiguration>     configuration_ = iface_cast<IDeckLinkConfiguration>(decklink_);
+    com_iface_ptr<IDeckLinkKeyer>             keyer_         = iface_cast<IDeckLinkKeyer>(decklink_, true);
+    com_iface_ptr<IDeckLinkProfileAttributes> attributes_    = iface_cast<IDeckLinkProfileAttributes>(decklink_);
 
     std::mutex         exception_mutex_;
     std::exception_ptr exception_;
@@ -336,7 +379,7 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
     std::unique_ptr<key_video_context>  key_context_;
 
     com_ptr<IDeckLinkDisplayMode> mode_ =
-        get_display_mode(output_, decklink_format_desc_.format, bmdFormat8BitBGRA, bmdVideoOutputFlagDefault);
+        get_display_mode(output_, decklink_format_desc_.format, bmdFormat8BitBGRA, bmdSupportedVideoModeDefault);
 
     std::atomic<bool> abort_request_{false};
 
@@ -352,8 +395,7 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
 
         int firstLine = topField ? 0 : 1;
 
-        if (channel_format_desc_.format == decklink_format_desc_.format && config_.src_x == 0 && config_.src_y == 0 &&
-            config_.region_w == 0 && config_.region_h == 0 && config_.dest_x == 0 && config_.dest_y == 0) {
+        if (channel_format_desc_.format == decklink_format_desc_.format && !config_.has_subregion_geometry()) {
             // Fast path
             size_t byte_count_line = (size_t)decklink_format_desc_.width * 4;
             for (int y = firstLine; y < decklink_format_desc_.height; y += decklink_format_desc_.field_count) {
@@ -434,12 +476,11 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
     core::video_format_desc get_decklink_format(const configuration&           config,
                                                 const core::video_format_desc& channel_format_desc)
     {
-        if (config.format != core::video_format::invalid && config.format != channel_format_desc.format) {
-            auto decklink_format = format_repository_.find_format(config.format);
-            if (decklink_format.format != core::video_format::invalid &&
-                decklink_format.format != core::video_format::custom &&
-                decklink_format.framerate == channel_format_desc.framerate) {
-                return decklink_format;
+        if (config.format.format != core::video_format::invalid && config.format.format != channel_format_desc.format) {
+            if (config.format.format != core::video_format::invalid &&
+                config.format.format != core::video_format::custom &&
+                config.format.framerate == channel_format_desc.framerate) {
+                return config.format;
             } else {
                 CASPAR_LOG(warning) << L"Ignoring specified format for decklink";
             }
@@ -453,22 +494,25 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
     }
 
   public:
-    decklink_consumer(const core::video_format_repository& format_repository,
-                      const configuration&                 config,
-                      const core::video_format_desc&       channel_format_desc,
-                      int                                  channel_index)
-        : format_repository_(format_repository)
+    decklink_consumer(core::video_format_repository format_repository,
+                      const configuration&          config,
+                      core::video_format_desc       channel_format_desc,
+                      int                           channel_index)
+        : format_repository_(std::move(format_repository))
         , channel_index_(channel_index)
         , config_(config)
-        , channel_format_desc_(channel_format_desc)
+        , channel_format_desc_(std::move(channel_format_desc))
         , decklink_format_desc_(get_decklink_format(config, channel_format_desc_))
     {
         if (config.duplex != configuration::duplex_t::default_duplex) {
-            set_duplex(attributes_, configuration_, config.duplex, print());
+            set_duplex(iface_cast<IDeckLinkAttributes_v10_11>(decklink_),
+                       iface_cast<IDeckLinkConfiguration_v10_11>(decklink_),
+                       config.duplex,
+                       print());
         }
 
         if (config.keyer == configuration::keyer_t::external_separate_device_keyer) {
-            key_context_.reset(new key_video_context(config, print()));
+            key_context_ = std::make_unique<key_video_context>(config, print());
         }
 
         graph_->set_color("tick-time", diagnostics::color(0.0f, 0.6f, 0.9f));
@@ -649,7 +693,7 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
             }
 
             std::shared_ptr<void>     image_data(scalable_aligned_malloc(decklink_format_desc_.size, 64),
-                                             scalable_aligned_free);
+                                                 scalable_aligned_free);
             std::vector<std::int32_t> audio_data;
 
             if (mode_->GetFieldDominance() != bmdProgressiveFrame) {
@@ -686,7 +730,7 @@ struct decklink_consumer : public IDeckLinkVideoOutputCallback
             std::unique_lock<std::mutex> lock(buffer_mutex_);
             buffer_cond_.wait(lock, [&] { return !buffer_.empty() || abort_request_; });
             if (!abort_request_) {
-                frame = std::move(buffer_.front());
+                frame = buffer_.front();
                 buffer_.pop();
             }
         }
@@ -792,16 +836,15 @@ struct decklink_consumer_proxy : public core::frame_consumer
     executor                            executor_;
 
   public:
-    explicit decklink_consumer_proxy(const core::video_format_repository& format_repository,
-                                     const configuration&                 config)
-        : format_repository_(format_repository)
+    explicit decklink_consumer_proxy(core::video_format_repository format_repository, const configuration& config)
+        : format_repository_(std::move(format_repository))
         , config_(config)
         , executor_(L"decklink_consumer[" + std::to_wstring(config.device_index) + L"]")
     {
         executor_.begin_invoke([=] { com_initialize(); });
     }
 
-    ~decklink_consumer_proxy()
+    ~decklink_consumer_proxy() override
     {
         executor_.invoke([=] {
             set_thread_realtime_priority();
@@ -815,7 +858,7 @@ struct decklink_consumer_proxy : public core::frame_consumer
         format_desc_ = format_desc;
         executor_.invoke([=] {
             consumer_.reset();
-            consumer_.reset(new decklink_consumer(format_repository_, config_, format_desc, channel_index));
+            consumer_ = std::make_unique<decklink_consumer>(format_repository_, config_, format_desc, channel_index);
         });
     }
 
@@ -831,13 +874,53 @@ struct decklink_consumer_proxy : public core::frame_consumer
     int index() const override { return 300 + config_.device_index; }
 
     bool has_synchronization_clock() const override { return true; }
+
+    core::monitor::state state() const override
+    {
+        core::monitor::state state;
+
+        state["decklink/index"]          = config_.device_index;
+        state["decklink/embedded-audio"] = config_.embedded_audio;
+        state["decklink/key-only"]       = config_.key_only;
+        state["decklink/buffer-depth"]   = config_.base_buffer_depth;
+        if (config_.format.format == core::video_format::invalid) {
+            state["decklink/video-mode"] = format_desc_.name;
+        } else {
+            state["decklink/video-mode"] = config_.format.name;
+        }
+
+        if (config_.keyer == configuration::keyer_t::external_keyer) {
+            state["decklink/keyer"] = std::wstring(L"external");
+        } else if (config_.keyer == configuration::keyer_t::internal_keyer) {
+            state["decklink/keyer"] = std::wstring(L"internal");
+        } else if (config_.keyer == configuration::keyer_t::external_separate_device_keyer) {
+            state["decklink/keyer"] = std::wstring(L"external_separate_device");
+        }
+
+        if (config_.latency == configuration::latency_t::low_latency) {
+            state["decklink/latency"] = std::wstring(L"low");
+        } else if (config_.latency == configuration::latency_t::normal_latency) {
+            state["decklink/latency"] = std::wstring(L"normal");
+        }
+
+        if (config_.has_subregion_geometry()) {
+            state["decklink/subregion/src-x"]  = config_.src_x;
+            state["decklink/subregion/src-y"]  = config_.src_y;
+            state["decklink/subregion/src-x"]  = config_.dest_x;
+            state["decklink/subregion/dest-y"] = config_.dest_y;
+            state["decklink/subregion/width"]  = config_.region_w;
+            state["decklink/subregion/height"] = config_.region_h;
+        }
+
+        return state;
+    }
 };
 
 spl::shared_ptr<core::frame_consumer> create_consumer(const std::vector<std::wstring>&     params,
                                                       const core::video_format_repository& format_repository,
                                                       std::vector<spl::shared_ptr<core::video_channel>> channels)
 {
-    if (params.size() < 1 || !boost::iequals(params.at(0), L"DECKLINK")) {
+    if (params.empty() || !boost::iequals(params.at(0), L"DECKLINK")) {
         return core::frame_consumer::empty();
     }
 
@@ -909,11 +992,11 @@ create_preconfigured_consumer(const boost::property_tree::wptree&               
     config.base_buffer_depth = ptree.get(L"buffer-depth", config.base_buffer_depth);
 
     auto format_desc_str = ptree.get(L"video-mode", L"");
-    if (format_desc_str.size() > 0) {
+    if (!format_desc_str.empty()) {
         auto format_desc = format_repository.find(format_desc_str);
         if (format_desc.format == core::video_format::invalid || format_desc.format == core::video_format::custom)
             CASPAR_THROW_EXCEPTION(user_error() << msg_info(L"Invalid video-mode: " + format_desc_str));
-        config.format = format_desc.format;
+        config.format = format_desc;
     }
 
     auto subregion_tree = ptree.get_child_optional(L"subregion");

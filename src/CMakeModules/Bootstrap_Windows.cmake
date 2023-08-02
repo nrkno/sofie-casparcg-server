@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.16)
 
 find_package(Git)
 
@@ -74,21 +74,22 @@ set(NUGET_PACKAGES_FOLDER "${CMAKE_CURRENT_BINARY_DIR}/packages")
 casparcg_add_runtime_dependency("${PROJECT_SOURCE_DIR}/shell/casparcg.config")
 
 # BOOST
-set(BOOST_INCLUDE_PATH "${NUGET_PACKAGES_FOLDER}/boost.1.66.0.0/lib/native/include")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_atomic-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_chrono-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_context-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_coroutine-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_date_time-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_filesystem-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_locale-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_log-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_log_setup-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_regex-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_system-vc141.1.66.0.0/lib/native")
-link_directories("${NUGET_PACKAGES_FOLDER}/boost_thread-vc141.1.66.0.0/lib/native")
+set(BOOST_INCLUDE_PATH "${NUGET_PACKAGES_FOLDER}/boost.1.67.0.0/lib/native/include")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_atomic-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_chrono-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_context-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_coroutine-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_date_time-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_filesystem-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_locale-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_log-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_log_setup-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_regex-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_system-vc141.1.67.0.0/lib/native")
+link_directories("${NUGET_PACKAGES_FOLDER}/boost_thread-vc141.1.67.0.0/lib/native")
 add_definitions( -DBOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE )
 add_definitions( -DBOOST_COROUTINES_NO_DEPRECATION_WARNING )
+add_definitions( -DBOOST_LOCALE_HIDE_AUTO_PTR )
 
 # FFMPEG
 set(FFMPEG_INCLUDE_PATH "${NUGET_PACKAGES_FOLDER}/FFmpeg.Stable.5.1.2/build/native/include")
@@ -179,6 +180,7 @@ if (ENABLE_HTML)
 endif ()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT casparcg)
 
 add_definitions(-DUNICODE)
 add_definitions(-D_UNICODE)
@@ -192,8 +194,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}	/Oi /Ot /Gy /bigobj")
 if (POLICY CMP0045)
 	cmake_policy(SET CMP0045 OLD)
 endif ()
-
-include(CMakeModules/PrecompiledHeader.cmake)
 
 add_subdirectory(tools)
 add_subdirectory(accelerator)

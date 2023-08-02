@@ -260,6 +260,14 @@ struct newtek_ndi_producer : public core::frame_producer
         return core::draw_frame::still(last_frame_);
     }
 
+    core::monitor::state state() const override
+    {
+        core::monitor::state state;
+        state["ndi/name"]          = u8(name_);
+        state["ndi/low_bandwidth"] = low_bandwidth_;
+        return state;
+    }
+
 }; // namespace newtek
 
 std::atomic<int> newtek_ndi_producer::instances_(0);

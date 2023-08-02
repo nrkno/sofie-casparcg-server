@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.16)
 project (newtek)
 
 set(SOURCES
@@ -10,7 +10,6 @@ set(SOURCES
 
 		newtek.cpp
 
-		StdAfx.cpp
 )
 set(HEADERS
 		consumer/newtek_ndi_consumer.h
@@ -44,14 +43,16 @@ if (MSVC)
 endif()
 
 add_library(newtek ${SOURCES} ${HEADERS})
-add_precompiled_header(newtek StdAfx.h FORCEINCLUDE)
+target_compile_features(newtek PRIVATE cxx_std_14)
+target_include_directories(newtek PRIVATE
+    ..
+    ../..
+    ${BOOST_INCLUDE_PATH}
+    ${TBB_INCLUDE_PATH}
+    ${FFMPEG_INCLUDE_PATH}
+    )
+target_precompile_headers(newtek PRIVATE "StdAfx.h")
 configure_file("${PROJECT_SOURCE_DIR}/packages.config" "${CMAKE_CURRENT_BINARY_DIR}/packages.config")
-
-include_directories(..)
-include_directories(../..)
-include_directories(${BOOST_INCLUDE_PATH})
-include_directories(${TBB_INCLUDE_PATH})
-include_directories(${FFMPEG_INCLUDE_PATH})
 
 set_target_properties(newtek PROPERTIES FOLDER modules)
 source_group(sources\\consumer consumer/*)

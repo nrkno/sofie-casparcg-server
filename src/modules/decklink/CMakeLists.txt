@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.16)
 project (decklink)
 
 set(SOURCES
@@ -7,7 +7,6 @@ set(SOURCES
 		producer/decklink_producer.cpp
 
 		decklink.cpp
-		StdAfx.cpp
 )
 set(HEADERS
 		consumer/decklink_consumer.h
@@ -22,7 +21,6 @@ set(HEADERS
 )
 if (MSVC)
 	set(OS_SPECIFIC_SOURCES
-			StdAfx.c
 			interop/DeckLinkAPI_i.c
 			interop/DeckLinkAPI.h
 			interop/DeckLinkAPIVersion.h
@@ -52,14 +50,16 @@ else()
 endif ()
 
 add_library(decklink ${SOURCES} ${HEADERS} ${OS_SPECIFIC_SOURCES})
-add_precompiled_header(decklink StdAfx.h FORCEINCLUDE)
+target_compile_features(decklink PRIVATE cxx_std_14)
+target_include_directories(decklink PRIVATE
+    ..
+    ../..
+    ${BOOST_INCLUDE_PATH}
+    ${TBB_INCLUDE_PATH}
+    ${FFMPEG_INCLUDE_PATH}
+    )
+target_precompile_headers(decklink PRIVATE "StdAfx.h")
 configure_file("${PROJECT_SOURCE_DIR}/packages.config" "${CMAKE_CURRENT_BINARY_DIR}/packages.config")
-
-include_directories(..)
-include_directories(../..)
-include_directories(${BOOST_INCLUDE_PATH})
-include_directories(${TBB_INCLUDE_PATH})
-include_directories(${FFMPEG_INCLUDE_PATH})
 
 set_target_properties(decklink PROPERTIES FOLDER modules)
 source_group(sources ./*)

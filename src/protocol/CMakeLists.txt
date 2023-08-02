@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.16)
 project (protocol)
 
 set(SOURCES
@@ -23,7 +23,6 @@ set(SOURCES
 		util/http_request.cpp
 		util/tokenize.cpp
 
-		StdAfx.cpp
 )
 set(HEADERS
 		amcp/AMCPCommand.h
@@ -60,12 +59,14 @@ set(HEADERS
 )
 
 add_library(protocol ${SOURCES} ${HEADERS})
-add_precompiled_header(protocol StdAfx.h FORCEINCLUDE)
+target_compile_features(protocol PRIVATE cxx_std_14)
+target_include_directories(protocol  PRIVATE
+    ..
+    ${BOOST_INCLUDE_PATH}
+    ${TBB_INCLUDE_PATH}
+    )
+target_precompile_headers(protocol PRIVATE "StdAfx.h")
 configure_file("${PROJECT_SOURCE_DIR}/packages.config" "${CMAKE_CURRENT_BINARY_DIR}/packages.config")
-
-include_directories(..)
-include_directories(${BOOST_INCLUDE_PATH})
-include_directories(${TBB_INCLUDE_PATH})
 
 source_group(sources\\amcp amcp/*)
 source_group(sources\\cii cii/*)

@@ -40,8 +40,6 @@
 #endif
 
 extern "C" {
-#define __STDC_CONSTANT_MACROS
-#define __STDC_LIMIT_MACROS
 #include <libavdevice/avdevice.h>
 #include <libavfilter/avfilter.h>
 #include <libavformat/avformat.h>
@@ -110,7 +108,7 @@ void log_callback(void* ptr, int level, const char* fmt, va_list vl)
 
 void log_for_thread(void* ptr, int level, const char* fmt, va_list vl) { log_callback(ptr, level, fmt, vl); }
 
-void init(core::module_dependencies dependencies)
+void init(const core::module_dependencies& dependencies)
 {
     av_log_set_callback(log_for_thread);
 
