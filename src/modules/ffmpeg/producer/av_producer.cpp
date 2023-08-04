@@ -76,7 +76,7 @@ struct Frame
 
 class Decoder
 {
-    Decoder(const Decoder&)            = delete;
+    Decoder(const Decoder&) = delete;
     Decoder& operator=(const Decoder&) = delete;
 
     AVStream*         st       = nullptr;
@@ -626,7 +626,8 @@ struct AVProducer::Impl
     mutable boost::mutex      buffer_mutex_;
     boost::condition_variable buffer_cond_;
     std::atomic<bool>         buffer_eof_{false};
-    int                       buffer_capacity_ = static_cast<int>(format_desc_.fps) / 4;
+    int                       buffer_capacity_  = static_cast<int>(format_desc_.fps) / 4;
+    bool                      started_playback_ = false;
 
     boost::optional<caspar::executor> video_executor_;
     boost::optional<caspar::executor> audio_executor_;
@@ -867,11 +868,29 @@ struct AVProducer::Impl
 
             graph_->set_value("decode-time", decode_timer.elapsed() * format_desc_.fps * 0.5);
 
+            bool        has_started_playback = true;
+            std::size_t buffer_size;
             {
                 boost::unique_lock<boost::mutex> buffer_lock(buffer_mutex_);
                 buffer_cond_.wait(buffer_lock, [&] { return buffer_.size() < buffer_capacity_; });
                 if (seek_ == AV_NOPTS_VALUE) {
                     buffer_.push_back(frame);
+                }
+                has_started_playback = started_playback_;
+                buffer_size          = buffer_.size();
+            }
+
+            graph_->set_value("buffer", static_cast<double>(buffer_size) / static_cast<double>(buffer_capacity_));
+
+            boost::range::rotate(audio_cadence, std::end(audio_cadence) - 1);
+
+            if (!has_started_playback && buffer_size < 4) {
+                // Producer is not playing yet, slow down the initial frame loading to reduce cpu spikes
+
+                double time_per_frame = 1.0 / format_desc_.hz;
+                auto   sleep_ms       = (time_per_frame - frame_timer.elapsed()) * 1000 / 3; // decode at ~3x speed
+                if (sleep_ms > 0) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(sleep_ms)));
                 }
             }
 
@@ -882,10 +901,6 @@ struct AVProducer::Impl
             }
 
             decode_timer.restart();
-
-            graph_->set_value("buffer", static_cast<double>(buffer_.size()) / static_cast<double>(buffer_capacity_));
-
-            boost::range::rotate(audio_cadence, std::end(audio_cadence) - 1);
         }
     }
 
@@ -924,6 +939,7 @@ struct AVProducer::Impl
         CASPAR_SCOPE_EXIT { update_state(); };
 
         boost::lock_guard<boost::mutex> lock(buffer_mutex_);
+        started_playback_ = true;
 
         if (buffer_.empty() || (frame_flush_ && buffer_.size() < 4)) {
             auto start    = start_.load();
