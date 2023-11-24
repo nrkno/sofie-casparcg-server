@@ -24,6 +24,7 @@ target_include_directories(html PRIVATE
     ${CEF_INCLUDE_PATH}
     )
 configure_file("${PROJECT_SOURCE_DIR}/packages.config" "${CMAKE_CURRENT_BINARY_DIR}/packages.config")
+add_dependencies(html cef)
 
 
 set_target_properties(html PROPERTIES FOLDER modules)
@@ -43,11 +44,7 @@ if(MSVC)
 	)
 else()
 	target_link_libraries(html
-		common
-		core
-
-		${CEF_BIN_PATH}/libcef.so
-		${CEF_BIN_PATH}/libcef_dll_wrapper.a
+		${CEF_LIB}
 	)
 endif()
 
