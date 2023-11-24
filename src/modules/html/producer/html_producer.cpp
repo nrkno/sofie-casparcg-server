@@ -207,17 +207,18 @@ class html_client
         }
     }
 
-    bool OnBeforePopup(CefRefPtr<CefBrowser>   browser,
-                       CefRefPtr<CefFrame>     frame,
-                       const CefString&        target_url,
-                       const CefString&        target_frame_name,
-                       WindowOpenDisposition   target_disposition,
-                       bool                    user_gesture,
-                       const CefPopupFeatures& popupFeatures,
-                       CefWindowInfo&          windowInfo,
-                       CefRefPtr<CefClient>&   client,
-                       CefBrowserSettings&     settings,
-                       bool*                   no_javascript_access) override
+    bool OnBeforePopup(CefRefPtr<CefBrowser>          browser,
+                       CefRefPtr<CefFrame>            frame,
+                       const CefString&               target_url,
+                       const CefString&               target_frame_name,
+                       WindowOpenDisposition          target_disposition,
+                       bool                           user_gesture,
+                       const CefPopupFeatures&        popupFeatures,
+                       CefWindowInfo&                 windowInfo,
+                       CefRefPtr<CefClient>&          client,
+                       CefBrowserSettings&            settings,
+                       CefRefPtr<CefDictionaryValue>& dict,
+                       bool*                          no_javascript_access) override
     {
         // This blocks popup windows from opening, as they dont make sense and hit an exception in get_browser_host upon
         // closing
@@ -359,6 +360,7 @@ class html_client
     }
 
     bool OnProcessMessageReceived(CefRefPtr<CefBrowser>        browser,
+                                  CefRefPtr<CefFrame>          frame,
                                   CefProcessId                 source_process,
                                   CefRefPtr<CefProcessMessage> message) override
     {
@@ -438,16 +440,15 @@ class html_producer : public core::frame_producer
             client_ = new html_client(frame_factory, graph_, format_desc, enable_gpu, url_);
 
             CefWindowInfo window_info;
-            window_info.width                        = format_desc.square_width;
-            window_info.height                       = format_desc.square_height;
+            window_info.bounds.width                 = format_desc.square_width;
+            window_info.bounds.height                = format_desc.square_height;
             window_info.windowless_rendering_enabled = true;
 
             CefBrowserSettings browser_settings;
-            browser_settings.web_security = cef_state_t::STATE_DISABLED;
-            browser_settings.webgl        = enable_gpu ? cef_state_t::STATE_ENABLED : cef_state_t::STATE_DISABLED;
-            double fps                    = format_desc.fps;
+            browser_settings.webgl = enable_gpu ? cef_state_t::STATE_ENABLED : cef_state_t::STATE_DISABLED;
+            double fps             = format_desc.fps;
             browser_settings.windowless_frame_rate = int(ceil(fps));
-            CefBrowserHost::CreateBrowser(window_info, client_.get(), url, browser_settings, nullptr);
+            CefBrowserHost::CreateBrowser(window_info, client_.get(), url, browser_settings, nullptr, nullptr);
         });
     }
 

@@ -25,6 +25,7 @@
 #include <common/memory.h>
 
 #include <core/frame/frame.h>
+#include <core/frame/pixel_format.h>
 #include <core/mixer/image/image_mixer.h>
 #include <core/video_format.h>
 
