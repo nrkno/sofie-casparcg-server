@@ -50,7 +50,7 @@ else()
 endif ()
 
 add_library(decklink ${SOURCES} ${HEADERS} ${OS_SPECIFIC_SOURCES})
-target_compile_features(decklink PRIVATE cxx_std_14)
+target_compile_features(decklink PRIVATE cxx_std_17)
 target_include_directories(decklink PRIVATE
     ..
     ../..
