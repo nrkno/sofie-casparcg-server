@@ -39,6 +39,7 @@ target_include_directories(casparcg PRIVATE
     )
 
 source_group(sources ./*)
+add_dependencies(casparcg cef)
 
 target_link_libraries(casparcg
 		accelerator
