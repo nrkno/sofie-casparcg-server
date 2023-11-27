@@ -1,3 +1,21 @@
+CasparCG 2.4.0 NRK RC3
+==========================================
+
+### Core
+##### Improvements
+* Build: Update boost
+##### Fixes
+* AMCP: Ensure all consumers and producers are reported in `INFO` commands
+* Route: layer route silent
+
+### Producers
+##### Improvements
+* HTML: Update to CEF 117
+* System Audio: Allow specifying output device to use
+##### Fixes
+* Decklink: Log spamming when using some input formats
+* Decklink: Log late/dropped frames
+
 CasparCG 2.4.0 NRK RC2
 ==========================================
 
