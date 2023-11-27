@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 3.16)
 
+include(ExternalProject)
+
 find_package(Git)
 
 set(CONFIG_VERSION_GIT_HASH "N/A")
@@ -159,20 +161,30 @@ casparcg_add_runtime_dependency("${LIBERATION_FONTS_BIN_PATH}/LiberationMono-Reg
 
 # CEF
 if (ENABLE_HTML)
-	set(CEF_INCLUDE_PATH "${NUGET_PACKAGES_FOLDER}/cef.sdk.3.3578.1870/CEF")
-	set(CEF_BIN_PATH "${NUGET_PACKAGES_FOLDER}/cef.redist.x64.3.3578.1870/CEF")
-	set(CEF_RESOURCE_PATH "${NUGET_PACKAGES_FOLDER}/cef.redist.x64.3.3578.1870/CEF")
-	link_directories("${NUGET_PACKAGES_FOLDER}/cef.sdk.3.3578.1870/CEF/x64")
+	# casparcg_add_external_project(cef)
+	ExternalProject_Add(cef
+		URL https://cef-builds.spotifycdn.com/cef_binary_117.2.5%2Bgda4c36a%2Bchromium-117.0.5938.152_windows64_minimal.tar.bz2
+		URL_HASH MD5=cff21bce81bada2a9e5f0afbec0858f0
+		DOWNLOAD_DIR ${CASPARCG_DOWNLOAD_CACHE}
+		CMAKE_ARGS -DUSE_SANDBOX=Off -DCEF_RUNTIME_LIBRARY_FLAG=/MD
+		INSTALL_COMMAND ""
+		PATCH_COMMAND git apply ${CASPARCG_PATCH_DIR}/cef117.patch
+	)
+	ExternalProject_Get_Property(cef SOURCE_DIR)
+	ExternalProject_Get_Property(cef BINARY_DIR)
+
+	set(CEF_INCLUDE_PATH ${SOURCE_DIR})
+	set(CEF_BIN_PATH ${SOURCE_DIR}/Release)
+	set(CEF_RESOURCE_PATH ${SOURCE_DIR}/Resources)
+	link_directories(${SOURCE_DIR}/Release)
+	link_directories(${BINARY_DIR}/libcef_dll_wrapper)
 
 	casparcg_add_runtime_dependency_dir("${CEF_RESOURCE_PATH}/locales")
-	casparcg_add_runtime_dependency_dir("${CEF_RESOURCE_PATH}/swiftshader")
-	casparcg_add_runtime_dependency("${CEF_RESOURCE_PATH}/cef.pak")
-	casparcg_add_runtime_dependency("${CEF_RESOURCE_PATH}/cef_100_percent.pak")
-	casparcg_add_runtime_dependency("${CEF_RESOURCE_PATH}/cef_200_percent.pak")
-	casparcg_add_runtime_dependency("${CEF_RESOURCE_PATH}/cef_extensions.pak")
-	casparcg_add_runtime_dependency("${CEF_RESOURCE_PATH}/devtools_resources.pak")
+	casparcg_add_runtime_dependency("${CEF_RESOURCE_PATH}/chrome_100_percent.pak")
+	casparcg_add_runtime_dependency("${CEF_RESOURCE_PATH}/chrome_200_percent.pak")
+	casparcg_add_runtime_dependency("${CEF_RESOURCE_PATH}/resources.pak")
 	casparcg_add_runtime_dependency("${CEF_RESOURCE_PATH}/icudtl.dat")
-	casparcg_add_runtime_dependency("${CEF_BIN_PATH}/natives_blob.bin")
+	
 	casparcg_add_runtime_dependency("${CEF_BIN_PATH}/snapshot_blob.bin")
 	casparcg_add_runtime_dependency("${CEF_BIN_PATH}/v8_context_snapshot.bin")
 	casparcg_add_runtime_dependency("${CEF_BIN_PATH}/libcef.dll")
@@ -180,6 +192,9 @@ if (ENABLE_HTML)
 	casparcg_add_runtime_dependency("${CEF_BIN_PATH}/d3dcompiler_47.dll")
 	casparcg_add_runtime_dependency("${CEF_BIN_PATH}/libEGL.dll")
 	casparcg_add_runtime_dependency("${CEF_BIN_PATH}/libGLESv2.dll")
+	casparcg_add_runtime_dependency("${CEF_BIN_PATH}/vk_swiftshader.dll")
+	casparcg_add_runtime_dependency("${CEF_BIN_PATH}/vk_swiftshader_icd.json")
+	casparcg_add_runtime_dependency("${CEF_BIN_PATH}/vulkan-1.dll")
 endif ()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

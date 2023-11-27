@@ -44,13 +44,6 @@
 #include <include/cef_version.h>
 #pragma warning(pop)
 
-#pragma comment(lib, "libcef.lib")
-#pragma comment(lib, "libcef_dll_wrapper.lib")
-
-#ifdef WIN32
-#include <accelerator/d3d/d3d_device.h>
-#endif
-
 namespace caspar { namespace html {
 
 std::unique_ptr<executor> g_cef_executor;
@@ -63,7 +56,11 @@ void caspar_log(const CefRefPtr<CefBrowser>&        browser,
         auto msg = CefProcessMessage::Create(LOG_MESSAGE_NAME);
         msg->GetArgumentList()->SetInt(0, level);
         msg->GetArgumentList()->SetString(1, message);
-        browser->SendProcessMessage(PID_BROWSER, msg);
+
+        CefRefPtr<CefFrame> mainFrame = browser->GetMainFrame();
+        if (mainFrame) {
+            mainFrame->SendProcessMessage(PID_BROWSER, msg);
+        }
     }
 }
 
@@ -87,7 +84,10 @@ class remove_handler : public CefV8Handler
             return false;
         }
 
-        browser_->SendProcessMessage(PID_BROWSER, CefProcessMessage::Create(REMOVE_MESSAGE_NAME));
+        CefRefPtr<CefFrame> mainFrame = browser_->GetMainFrame();
+        if (mainFrame) {
+            mainFrame->SendProcessMessage(PID_BROWSER, CefProcessMessage::Create(REMOVE_MESSAGE_NAME));
+        }
 
         return true;
     }
@@ -162,8 +162,12 @@ class renderer_application
     {
         if (enable_gpu_) {
             command_line->AppendSwitch("enable-webgl");
+
+            // This gives better performance on the gpu->cpu readback
+            command_line->AppendSwitchWithValue("use-angle", "gl");
         }
 
+        command_line->AppendSwitch("disable-web-security");
         command_line->AppendSwitch("enable-begin-frame-scheduling");
         command_line->AppendSwitch("enable-media-stream");
         command_line->AppendSwitch("use-fake-ui-for-media-stream");
@@ -172,6 +176,7 @@ class renderer_application
         if (process_type.empty() && !enable_gpu_) {
             // This gives more performance, but disabled gpu effects. Without it a single 1080p producer cannot be run
             // smoothly
+
             command_line->AppendSwitch("disable-gpu");
             command_line->AppendSwitch("disable-gpu-compositing");
             command_line->AppendSwitchWithValue("disable-gpu-vsync", "gpu");
@@ -203,14 +208,6 @@ void init(const core::module_dependencies& dependencies)
         SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 #endif
         const bool enable_gpu = env::properties().get(L"configuration.html.enable-gpu", false);
-
-#ifdef WIN32
-        if (enable_gpu) {
-            auto dev = accelerator::d3d::d3d_device::get_device();
-            if (!dev)
-                CASPAR_LOG(warning) << L"Failed to create directX device for cef gpu acceleration";
-        }
-#endif
 
         CefSettings settings;
         settings.command_line_args_disabled   = false;

@@ -15,7 +15,7 @@ set(HEADERS
 )
 
 add_library(html ${SOURCES} ${HEADERS})
-target_compile_features(html PRIVATE cxx_std_14)
+target_compile_features(html PRIVATE cxx_std_17)
 target_include_directories(html PRIVATE
     ..
     ../..
@@ -24,6 +24,7 @@ target_include_directories(html PRIVATE
     ${CEF_INCLUDE_PATH}
     )
 configure_file("${PROJECT_SOURCE_DIR}/packages.config" "${CMAKE_CURRENT_BINARY_DIR}/packages.config")
+add_dependencies(html cef)
 
 
 set_target_properties(html PROPERTIES FOLDER modules)
@@ -36,18 +37,13 @@ if(MSVC)
 		core
 		accelerator
 
-		optimized release/libcef
-		optimized release/VS2015/libcef_dll_wrapper
-		debug debug/libcef
-		debug debug/VS2015/libcef_dll_wrapper
+		libcef
+		optimized Release/libcef_dll_wrapper
+		debug Debug/libcef_dll_wrapper
 	)
 else()
 	target_link_libraries(html
-		common
-		core
-
-		${CEF_BIN_PATH}/libcef.so
-		${CEF_BIN_PATH}/libcef_dll_wrapper.a
+		${CEF_LIB}
 	)
 endif()
 
