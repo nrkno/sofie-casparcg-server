@@ -1,3 +1,15 @@
+CasparCG 2.4.0 NRK RC4
+==========================================
+
+### Core
+##### Fixes
+* Support config file being specified with full/absolute path
+* Changing channel videomode with consumers fails
+
+### Producers
+##### Fixes
+* FFmpeg: Specifying in and seek values could result in incorrect duration
+
 CasparCG 2.4.0 NRK RC3
 ==========================================
 
