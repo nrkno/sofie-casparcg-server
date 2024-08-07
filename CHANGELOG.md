@@ -1,7 +1,13 @@
 CasparCG 2.4.0 NRK RC5
 ==========================================
 
-This includes everything from upstream CasparCG v2.4.0 and some unreleased fixes in the v2.4.x branch as of 07-08-2023.
+This includes everything from upstream CasparCG v2.4.0 and some unreleased fixes in the v2.4.x branch as of 07-08-2023 (2b9c040).
+
+
+## Changes relative to Upstream 2.4.x as of 07-08-2023 (2b9c040)
+
+* Remove Flash Producer
+
 
 ## Changes relative to 2.4.0 NRK RC4
 
