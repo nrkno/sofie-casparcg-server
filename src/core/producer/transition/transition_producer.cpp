@@ -31,8 +31,9 @@
 #include <common/scope_exit.h>
 
 #include <future>
+#include <utility>
 
-namespace caspar { namespace core {
+namespace caspar::core {
 
 class transition_producer : public frame_producer
 {
@@ -43,43 +44,64 @@ class transition_producer : public frame_producer
 
     spl::shared_ptr<frame_producer> dst_producer_ = frame_producer::empty();
     spl::shared_ptr<frame_producer> src_producer_ = frame_producer::empty();
+    bool                            dst_is_ready_ = false;
 
   public:
-    transition_producer(const spl::shared_ptr<frame_producer>& dest, const transition_info& info)
-        : info_(info)
+    transition_producer(const spl::shared_ptr<frame_producer>& dest, transition_info info)
+        : info_(std::move(info))
         , dst_producer_(dest)
     {
+        dst_is_ready_ = dst_producer_->is_ready();
         update_state();
     }
 
     // frame_producer
 
+    void update_is_ready(const core::video_field field)
+    {
+        // Ensure a frame has been attempted
+        dst_producer_->first_frame(field);
+
+        dst_is_ready_ = dst_producer_->is_ready();
+    }
+
     core::draw_frame last_frame(const core::video_field field) override
     {
         CASPAR_SCOPE_EXIT { update_state(); };
 
+        update_is_ready(field);
+
+        if (!dst_is_ready_) {
+            return src_producer_->last_frame(field);
+        }
+
         auto src = src_producer_->last_frame(field);
         auto dst = dst_producer_->last_frame(field);
 
-        return dst && current_frame_ >= info_.duration ? dst : src;
+        if (dst && current_frame_ >= info_.duration) {
+            return dst;
+        } else {
+            return src;
+        }
     }
 
     core::draw_frame first_frame(const core::video_field field) override { return dst_producer_->first_frame(field); }
 
     void leading_producer(const spl::shared_ptr<frame_producer>& producer) override { src_producer_ = producer; }
 
-    spl::shared_ptr<frame_producer> following_producer() const override
+    [[nodiscard]] spl::shared_ptr<frame_producer> following_producer() const override
     {
-        return current_frame_ >= info_.duration ? dst_producer_ : core::frame_producer::empty();
+        return current_frame_ >= info_.duration && dst_is_ready_ ? dst_producer_ : core::frame_producer::empty();
     }
 
-    boost::optional<int64_t> auto_play_delta() const override { return info_.duration; }
+    [[nodiscard]] std::optional<int64_t> auto_play_delta() const override { return info_.duration; }
 
     void update_state()
     {
-        state_                     = dst_producer_->state();
-        state_["transition/frame"] = {current_frame_, info_.duration};
-        state_["transition/type"]  = [&]() -> std::string {
+        state_                        = dst_producer_->state();
+        state_["transition/producer"] = dst_producer_->name();
+        state_["transition/frame"]    = {current_frame_, info_.duration};
+        state_["transition/type"]     = [&]() -> std::string {
             switch (info_.type) {
                 case transition_type::mix:
                     return "mix";
@@ -100,6 +122,12 @@ class transition_producer : public frame_producer
     draw_frame receive_impl(const core::video_field field, int nb_samples) override
     {
         CASPAR_SCOPE_EXIT { update_state(); };
+
+        update_is_ready(field);
+
+        if (!dst_is_ready_) {
+            return src_producer_->receive(field, nb_samples);
+        }
 
         auto dst = dst_producer_->receive(field, nb_samples);
         if (!dst) {
@@ -124,23 +152,23 @@ class transition_producer : public frame_producer
         return compose(dst, src);
     }
 
-    uint32_t nb_frames() const override { return dst_producer_->nb_frames(); }
+    [[nodiscard]] uint32_t nb_frames() const override { return dst_producer_->nb_frames(); }
 
-    uint32_t frame_number() const override { return dst_producer_->frame_number(); }
+    [[nodiscard]] uint32_t frame_number() const override { return dst_producer_->frame_number(); }
 
-    std::wstring print() const override
+    [[nodiscard]] std::wstring print() const override
     {
         return L"transition[" + src_producer_->print() + L"=>" + dst_producer_->print() + L"]";
     }
 
-    std::wstring name() const override { return L"transition"; }
+    [[nodiscard]] std::wstring name() const override { return L"transition"; }
 
     std::future<std::wstring> call(const std::vector<std::wstring>& params) override
     {
         return dst_producer_->call(params);
     }
 
-    draw_frame compose(draw_frame dst_frame, draw_frame src_frame) const
+    [[nodiscard]] draw_frame compose(draw_frame dst_frame, draw_frame src_frame) const
     {
         if (info_.type == transition_type::cut) {
             return src_frame;
@@ -174,7 +202,9 @@ class transition_producer : public frame_producer
         return draw_frame::over(src_frame, dst_frame);
     }
 
-    core::monitor::state state() const override { return state_; }
+    [[nodiscard]] core::monitor::state state() const override { return state_; }
+
+    bool is_ready() override { return dst_producer_->is_ready(); }
 };
 
 spl::shared_ptr<frame_producer> create_transition_producer(const spl::shared_ptr<frame_producer>& destination,
@@ -192,11 +222,15 @@ bool try_match_transition(const std::wstring& message, transition_info& transiti
         return false;
     }
 
-    auto transition         = what["TRANSITION"].str();
     transitionInfo.duration = std::stoi(what["DURATION"].str());
-    auto direction          = what["DIRECTION"].matched ? what["DIRECTION"].str() : L"";
-    auto tween              = what["TWEEN"].matched ? what["TWEEN"].str() : L"";
-    transitionInfo.tweener  = tween;
+    if (transitionInfo.duration == 0) {
+        return false;
+    }
+
+    auto transition        = what["TRANSITION"].str();
+    auto direction         = what["DIRECTION"].matched ? what["DIRECTION"].str() : L"";
+    auto tween             = what["TWEEN"].matched ? what["TWEEN"].str() : L"";
+    transitionInfo.tweener = tween;
 
     if (transition == L"CUT")
         transitionInfo.type = transition_type::cut;
@@ -209,16 +243,12 @@ bool try_match_transition(const std::wstring& message, transition_info& transiti
     else if (transition == L"WIPE")
         transitionInfo.type = transition_type::wipe;
 
-    if (direction == L"FROMLEFT")
+    if (direction == L"FROMLEFT" || direction == L"RIGHT")
         transitionInfo.direction = transition_direction::from_left;
-    else if (direction == L"FROMRIGHT")
+    else if (direction == L"FROMRIGHT" || direction == L"LEFT")
         transitionInfo.direction = transition_direction::from_right;
-    else if (direction == L"LEFT")
-        transitionInfo.direction = transition_direction::from_right;
-    else if (direction == L"RIGHT")
-        transitionInfo.direction = transition_direction::from_left;
 
     return true;
 }
 
-}} // namespace caspar::core
+} // namespace caspar::core

@@ -1,3 +1,62 @@
+CasparCG 2.4.0 NRK RC5
+==========================================
+
+This includes everything from upstream CasparCG v2.4.0 and some unreleased fixes in the v2.4.x branch as of 07-08-2023.
+
+## Changes relative to 2.4.0 NRK RC4
+
+### Core
+##### Improvements
+* Support 4K DCI frames
+* Remove undocumented CII and CLK protocol implementations
+* Config parameter can be an absolute system path, not just relative to the working directory
+* AMCP: Add commands to subscribe and unsubscribe to OSC on any port number
+* AMCP: Add CALLBG command to perform CALL on background producer
+* Build: Require C++17 for building
+* Build: Replace nuget and locally committed dependencies with direct http downloads
+* Build: Allow configuring diag font path at build time 
+* Linux: Initial ARM64 compatibility
+* Linux: Rework build to always use system boost
+* Linux: Rework build process to better support being build as a system package
+* Logging: add config option to disable logging to file and to disable column alignment 
+##### Fixes
+* Crash upon exiting if HTML producer was running
+* AMCP: Ensure all consumers and producers are reported in `INFO` commands
+* AMCP: Deferred mixer operations were not being cleared after being applied
+* AMCP: `LOAD` command would show a frame or two of black while new producer was loading
+* Fix bad config file examples
+* Fix `casparcg_auto_restart.bat` not starting scanner
+* Revert removal of tbbmalloc, due to notable performance loss on windows
+* Supress some cmake build warnings
+* Build failure when doxygen installed on system
+
+### Producers
+##### Improvements
+* Decklink: Require driver 11.0 or later
+* HTML: Expose `cache-path` setting
+* System Audio: Allow specifying output device to use
+##### Fixes
+* Decklink: Log spamming when using some input formats
+* FFmpeg: Don't lowercase filter parameters
+* FFmpeg: Support parameters with name containing a dash
+* HTML: Expose angle backend config field, the best backend varies depending on the templates and machine
+* HTML: Crash when multiple iframes were loaded within a renderer
+* Image: Improve file loading algorithm to match the case insensitive and absolute path support already used by ffmpeg
+* FFmpeg: Ignore ndi:// urls
+* Route: Race condition during destruction
+
+### Consumers
+##### Improvements
+* Artnet: New artnet consumer
+* Decklink: Output a subregion of the channel
+* Decklink: Add secondary outputs in a consumer, to ensure sync when used within a single card
+* iVGA: Remove consumer
+##### Fixes
+* Decklink: subregion copy not respecting frame height
+* Decklink: subregion vertical offset
+* Decklink: subregion height limited with some formats
+
+
 CasparCG 2.4.0 NRK RC4
 ==========================================
 

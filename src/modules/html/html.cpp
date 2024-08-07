@@ -113,6 +113,9 @@ class renderer_application
     void
     OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) override
     {
+        if (!frame->IsMain())
+            return;
+
         caspar_log(browser,
                    boost::log::trivial::trace,
                    "context for frame " + std::to_string(frame->GetIdentifier()) + " created");
@@ -142,6 +145,9 @@ class renderer_application
                            CefRefPtr<CefFrame>     frame,
                            CefRefPtr<CefV8Context> context) override
     {
+        if (!frame->IsMain())
+            return;
+
         auto removed =
             boost::remove_if(contexts_, [&](const CefRefPtr<CefV8Context>& c) { return c->IsSame(context); });
 
@@ -163,8 +169,11 @@ class renderer_application
         if (enable_gpu_) {
             command_line->AppendSwitch("enable-webgl");
 
-            // This gives better performance on the gpu->cpu readback
-            command_line->AppendSwitchWithValue("use-angle", "gl");
+            // This gives better performance on the gpu->cpu readback, but can perform worse with intense templates
+            auto backend = env::properties().get(L"configuration.html.angle-backend", L"gl");
+            if (backend.size() > 0) {
+                command_line->AppendSwitchWithValue("use-angle", backend);
+            }
         }
 
         command_line->AppendSwitch("disable-web-security");
@@ -172,6 +181,7 @@ class renderer_application
         command_line->AppendSwitch("enable-media-stream");
         command_line->AppendSwitch("use-fake-ui-for-media-stream");
         command_line->AppendSwitchWithValue("autoplay-policy", "no-user-gesture-required");
+        command_line->AppendSwitchWithValue("remote-allow-origins", "*");
 
         if (process_type.empty() && !enable_gpu_) {
             // This gives more performance, but disabled gpu effects. Without it a single 1080p producer cannot be run
@@ -214,6 +224,12 @@ void init(const core::module_dependencies& dependencies)
         settings.no_sandbox                   = true;
         settings.remote_debugging_port        = env::properties().get(L"configuration.html.remote-debugging-port", 0);
         settings.windowless_rendering_enabled = true;
+
+        auto cache_path = env::properties().get(L"configuration.html.cache-path", L"");
+        if (!cache_path.empty()) {
+            CefString(&settings.cache_path).FromWString(cache_path);
+        }
+
         CefInitialize(main_args, settings, CefRefPtr<CefApp>(new renderer_application(enable_gpu)), nullptr);
     });
     g_cef_executor->begin_invoke([&] { CefRunMessageLoop(); });

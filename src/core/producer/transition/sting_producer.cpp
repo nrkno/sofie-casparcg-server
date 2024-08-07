@@ -28,9 +28,7 @@
 #include "../../monitor/monitor.h"
 #include "../frame_producer.h"
 
-#include <common/param.h>
 #include <common/scope_exit.h>
-#include <protocol/amcp/amcp_args.h>
 
 #include <future>
 
@@ -98,21 +96,21 @@ class sting_producer : public frame_producer
         return duration && current_frame_ >= *duration ? dst_producer_ : core::frame_producer::empty();
     }
 
-    boost::optional<int64_t> auto_play_delta() const override
+    std::optional<int64_t> auto_play_delta() const override
     {
         auto duration = static_cast<int64_t>(mask_producer_->nb_frames());
         // ffmpeg will return -1 when media is still loading, so we need to cast duration first
         if (duration > -1) {
-            return boost::optional<int64_t>(duration);
+            return std::optional<int64_t>(duration);
         }
-        return boost::none;
+        return {};
     }
 
-    boost::optional<uint32_t> target_duration() const
+    std::optional<uint32_t> target_duration() const
     {
         auto autoplay = auto_play_delta();
         if (!autoplay) {
-            return boost::none;
+            return {};
         }
 
         auto autoplay2 = static_cast<uint32_t>(*autoplay);
@@ -266,6 +264,8 @@ class sting_producer : public frame_producer
     }
 
     monitor::state state() const override { return state_; }
+
+    bool is_ready() override { return dst_producer_->is_ready(); }
 };
 
 spl::shared_ptr<frame_producer> create_sting_producer(const frame_producer_dependencies&     dependencies,

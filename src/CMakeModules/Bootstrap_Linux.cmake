@@ -1,12 +1,17 @@
 cmake_minimum_required (VERSION 3.16)
 
 include(ExternalProject)
+include(FetchContent)
+
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
+set(ENABLE_HTML ON CACHE BOOL "Enable CEF and HTML producer")
+set(USE_STATIC_BOOST ON CACHE BOOL "Use shared library version of Boost")
+set(USE_SYSTEM_FFMPEG OFF CACHE BOOL "Use the version of ffmpeg from your OS")
 
 # Determine build (target) platform
-INCLUDE (PlatformIntrospection)
-_DETERMINE_PLATFORM (CONFIG_PLATFORM)
-_DETERMINE_ARCH (CONFIG_ARCH)
-_DETERMINE_CPU_COUNT (CONFIG_CPU_COUNT)
 SET (PLATFORM_FOLDER_NAME "linux")
 
 IF (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -16,31 +21,36 @@ IF (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 ENDIF ()
 MARK_AS_ADVANCED (CMAKE_INSTALL_PREFIX)
 
-FIND_PACKAGE (Git)
-SET (CONFIG_VERSION_GIT_HASH "N/A")
-IF (DEFINED ENV{GIT_HASH} AND NOT $ENV{GIT_HASH} STREQUAL "")
-	SET (CONFIG_VERSION_GIT_HASH "$ENV{GIT_HASH}")
-ELSEIF (GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/../.git")
-	EXEC_PROGRAM ("${GIT_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/../" ARGS rev-parse --verify --short HEAD OUTPUT_VARIABLE CONFIG_VERSION_GIT_HASH)
-ENDIF ()
-
-if (NOT USE_SYSTEM_BOOST)
-	SET (BOOST_ROOT_PATH "/opt/boost" CACHE STRING "Path to Boost")
-	SET (ENV{BOOST_ROOT} "${BOOST_ROOT_PATH}")
-	SET (Boost_USE_DEBUG_LIBS OFF)
-	SET (Boost_USE_RELEASE_LIBS ON)
+if (USE_STATIC_BOOST)
 	SET (Boost_USE_STATIC_LIBS ON)
 endif()
-FIND_PACKAGE (Boost 1.67.0 COMPONENTS system thread chrono filesystem log locale regex date_time coroutine REQUIRED)
+FIND_PACKAGE (Boost 1.67.0 COMPONENTS system thread chrono filesystem log_setup log locale regex date_time coroutine REQUIRED)
 
 if (NOT USE_SYSTEM_FFMPEG)
-	SET (FFMPEG_ROOT_PATH "/opt/ffmpeg/lib/pkgconfig" CACHE STRING "Path to FFMPEG")
-	SET (ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${FFMPEG_ROOT_PATH}")
-endif()
-FIND_PACKAGE (FFmpeg REQUIRED)
-LINK_DIRECTORIES( ${FFMPEG_LIBRARY_DIRS} )
+	FetchContent_Declare(
+		ffmpeg-lib
+		URL ${CASPARCG_DOWNLOAD_MIRROR}/ffmpeg/ffmpeg-n5.1.3_jammy.tar.gz
+		URL_HASH SHA1=344336816c214d52f63c197acbe9cce7d4a718ef
+		DOWNLOAD_DIR ${CASPARCG_DOWNLOAD_CACHE}
+	)
 
-FIND_PACKAGE (OpenGL REQUIRED)
+	FetchContent_MakeAvailable(ffmpeg-lib)
+
+
+	SET (FFMPEG_ROOT_PATH "${ffmpeg-lib_SOURCE_DIR}/ffmpeg/lib/pkgconfig")
+	SET (ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${FFMPEG_ROOT_PATH}")
+
+	FIND_PACKAGE (FFmpeg REQUIRED)
+	LINK_DIRECTORIES("${ffmpeg-lib_SOURCE_DIR}/ffmpeg/lib")
+	SET (FFMPEG_INCLUDE_PATH "${ffmpeg-lib_SOURCE_DIR}/ffmpeg/include")
+else()
+	FIND_PACKAGE (FFmpeg REQUIRED)
+	LINK_DIRECTORIES("${FFMPEG_LIBRARY_DIRS}")
+	
+	SET (FFMPEG_INCLUDE_PATH "${FFMPEG_INCLUDE_DIRS}")
+endif()
+
+FIND_PACKAGE (OpenGL REQUIRED COMPONENTS OpenGL GLX)
 FIND_PACKAGE (FreeImage REQUIRED)
 FIND_PACKAGE (GLEW REQUIRED)
 FIND_PACKAGE (TBB REQUIRED)
@@ -49,37 +59,46 @@ FIND_PACKAGE (SFML 2 COMPONENTS graphics window system REQUIRED)
 FIND_PACKAGE (X11 REQUIRED)
 
 if (ENABLE_HTML)
-	#casparcg_add_external_project(cef)
-	ExternalProject_Add(cef
-		URL https://cef-builds.spotifycdn.com/cef_binary_117.2.5%2Bgda4c36a%2Bchromium-117.0.5938.152_linux64_minimal.tar.bz2
-		URL_HASH SHA1=7e6c9cf591cf3b1dabe65a7611f5fc166df2ec1e
-		DOWNLOAD_DIR ${CASPARCG_DOWNLOAD_CACHE}
-		CMAKE_ARGS -DUSE_SANDBOX=Off
-		INSTALL_COMMAND ""
-		PATCH_COMMAND git apply ${CASPARCG_PATCH_DIR}/cef117.patch
-		BUILD_BYPRODUCTS
-			"<SOURCE_DIR>/Release/libcef.so"
-			"<BINARY_DIR>/libcef_dll_wrapper/libcef_dll_wrapper.a"
-	)
-	ExternalProject_Get_Property(cef SOURCE_DIR)
-	ExternalProject_Get_Property(cef BINARY_DIR)
+    if (USE_SYSTEM_CEF)
+        set(CEF_LIB_PATH "/usr/lib/casparcg-cef-117")
+        set(CEF_INCLUDE_PATH "/usr/include/casparcg-cef-117")
 
-	# Note: All of these must be referenced in the BUILD_BYPRODUCTS above, to satisfy ninja
-	set(CEF_LIB
-		"${SOURCE_DIR}/Release/libcef.so" 
-		"${BINARY_DIR}/libcef_dll_wrapper/libcef_dll_wrapper.a"
-	)
+        set(CEF_LIB
+            "-Wl,-rpath,${CEF_LIB_PATH} ${CEF_LIB_PATH}/libcef.so"
+            "${CEF_LIB_PATH}/libcef_dll_wrapper.a"
+        )
+    else()
+        casparcg_add_external_project(cef)
+        ExternalProject_Add(cef
+            URL ${CASPARCG_DOWNLOAD_MIRROR}/cef/cef_binary_117.2.5%2Bgda4c36a%2Bchromium-117.0.5938.152_linux64_minimal.tar.bz2
+            URL_HASH SHA1=7e6c9cf591cf3b1dabe65a7611f5fc166df2ec1e
+            DOWNLOAD_DIR ${CASPARCG_DOWNLOAD_CACHE}
+            CMAKE_ARGS -DUSE_SANDBOX=Off
+            INSTALL_COMMAND ""
+            PATCH_COMMAND git apply ${CASPARCG_PATCH_DIR}/cef117.patch
+            BUILD_BYPRODUCTS
+                "<SOURCE_DIR>/Release/libcef.so"
+                "<BINARY_DIR>/libcef_dll_wrapper/libcef_dll_wrapper.a"
+        )
+        ExternalProject_Get_Property(cef SOURCE_DIR)
+        ExternalProject_Get_Property(cef BINARY_DIR)
 
-	set(CEF_INCLUDE_PATH "${SOURCE_DIR}")
-	set(CEF_BIN_PATH "${SOURCE_DIR}/Release")
-	set(CEF_RESOURCE_PATH "${SOURCE_DIR}/Resources")
+        # Note: All of these must be referenced in the BUILD_BYPRODUCTS above, to satisfy ninja
+        set(CEF_LIB
+            "${SOURCE_DIR}/Release/libcef.so"
+            "${BINARY_DIR}/libcef_dll_wrapper/libcef_dll_wrapper.a"
+        )
+
+        set(CEF_INCLUDE_PATH "${SOURCE_DIR}")
+        set(CEF_BIN_PATH "${SOURCE_DIR}/Release")
+        set(CEF_RESOURCE_PATH "${SOURCE_DIR}/Resources")
+    endif()
 endif ()
 
 SET (BOOST_INCLUDE_PATH "${Boost_INCLUDE_DIRS}")
 SET (TBB_INCLUDE_PATH "${TBB_INCLUDE_DIRS}")
 SET (GLEW_INCLUDE_PATH "${GLEW_INCLUDE_DIRS}")
 SET (SFML_INCLUDE_PATH "${SFML_INCLUDE_DIR}")
-SET (FFMPEG_INCLUDE_PATH "${FFMPEG_INCLUDE_DIRS}")
 SET (FREEIMAGE_INCLUDE_PATH "${FreeImage_INCLUDE_DIRS}")
 
 SET_PROPERTY (GLOBAL PROPERTY USE_FOLDERS ON)
@@ -95,14 +114,14 @@ ADD_DEFINITIONS (-DNDEBUG) # Needed for precompiled headers to work
 ADD_DEFINITIONS (-DBOOST_LOCALE_HIDE_AUTO_PTR) # Needed for C++17 in boost 1.67+
 
 
-if (USE_SYSTEM_BOOST)
+if (NOT USE_STATIC_BOOST)
 	ADD_DEFINITIONS (-DBOOST_ALL_DYN_LINK)
 endif()
 
 IF (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
 	ADD_COMPILE_OPTIONS (-O3) # Needed for precompiled headers to work
 endif()
-IF (CONFIG_ARCH MATCHES "(i[3-6]86|x64|x86_64|amd64|e2k)")
+IF (CMAKE_SYSTEM_PROCESSOR MATCHES "(i[3-6]86|x64|x86_64|amd64|e2k)")
     ADD_COMPILE_OPTIONS (-msse3)
     ADD_COMPILE_OPTIONS (-mssse3)
     ADD_COMPILE_OPTIONS (-msse4.1)
@@ -125,59 +144,3 @@ ENDIF ()
 IF (POLICY CMP0045)
 	CMAKE_POLICY (SET CMP0045 OLD)
 ENDIF ()
-
-SET (CASPARCG_MODULE_INCLUDE_STATEMENTS "" CACHE INTERNAL "")
-SET (CASPARCG_MODULE_INIT_STATEMENTS "" CACHE INTERNAL "")
-SET (CASPARCG_MODULE_UNINIT_STATEMENTS "" CACHE INTERNAL "")
-SET (CASPARCG_MODULE_COMMAND_LINE_ARG_INTERCEPTORS_STATEMENTS "" CACHE INTERNAL "")
-SET (CASPARCG_MODULE_PROJECTS "" CACHE INTERNAL "")
-
-# This PrecompiledHeader helper is broken on linux in debug builds
-#INCLUDE (PrecompiledHeader)
-FUNCTION (add_precompiled_header TARGET HEADER)
-	# Ignore
-ENDFUNCTION ()
-
-FUNCTION (casparcg_add_include_statement HEADER_FILE_TO_INCLUDE)
-	SET (CASPARCG_MODULE_INCLUDE_STATEMENTS "${CASPARCG_MODULE_INCLUDE_STATEMENTS}"
-			"#include <${HEADER_FILE_TO_INCLUDE}>"
-			CACHE INTERNAL ""
-	)
-ENDFUNCTION ()
-
-FUNCTION (casparcg_add_init_statement INIT_FUNCTION_NAME NAME_TO_LOG)
-	SET (CASPARCG_MODULE_INIT_STATEMENTS "${CASPARCG_MODULE_INIT_STATEMENTS}"
-			"	${INIT_FUNCTION_NAME}(dependencies)\;"
-			"	CASPAR_LOG(info) << L\"Initialized ${NAME_TO_LOG} module.\"\;"
-			""
-			CACHE INTERNAL ""
-	)
-ENDFUNCTION ()
-
-FUNCTION (casparcg_add_uninit_statement UNINIT_FUNCTION_NAME)
-	SET (CASPARCG_MODULE_UNINIT_STATEMENTS
-			"	${UNINIT_FUNCTION_NAME}()\;"
-			"${CASPARCG_MODULE_UNINIT_STATEMENTS}"
-			CACHE INTERNAL ""
-	)
-ENDFUNCTION ()
-
-FUNCTION (casparcg_add_command_line_arg_interceptor INTERCEPTOR_FUNCTION_NAME)
-	set(CASPARCG_MODULE_COMMAND_LINE_ARG_INTERCEPTORS_STATEMENTS "${CASPARCG_MODULE_COMMAND_LINE_ARG_INTERCEPTORS_STATEMENTS}"
-			"	if (${INTERCEPTOR_FUNCTION_NAME}(argc, argv))"
-			"		return true\;"
-			""
-			CACHE INTERNAL ""
-	)
-ENDFUNCTION ()
-
-FUNCTION (casparcg_add_module_project PROJECT)
-	SET (CASPARCG_MODULE_PROJECTS "${CASPARCG_MODULE_PROJECTS}" "${PROJECT}" CACHE INTERNAL "")
-ENDFUNCTION ()
-
-# http://stackoverflow.com/questions/7172670/best-shortest-way-to-join-a-list-in-cmake
-FUNCTION (join_list VALUES GLUE OUTPUT)
-	STRING (REGEX REPLACE "([^\\]|^);" "\\1${GLUE}" _TMP_STR "${VALUES}")
-	STRING (REGEX REPLACE "[\\](.)" "\\1" _TMP_STR "${_TMP_STR}") #fixes escaping
-	SET (${OUTPUT} "${_TMP_STR}" PARENT_SCOPE)
-ENDFUNCTION ()

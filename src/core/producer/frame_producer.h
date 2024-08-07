@@ -30,11 +30,10 @@
 #include <core/frame/draw_frame.h>
 #include <core/video_format.h>
 
-#include <boost/optional.hpp>
-
 #include <cstdint>
 #include <functional>
 #include <future>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -49,16 +48,13 @@ class frame_producer
     uint32_t         frame_number_ = 0;
     core::draw_frame last_frame_;
     core::draw_frame first_frame_;
+    bool             is_ready_ = false;
 
   public:
     static const spl::shared_ptr<frame_producer>& empty();
 
-    frame_producer(core::draw_frame frame)
-        : last_frame_(std::move(frame))
-    {
-    }
-    frame_producer() {}
-    virtual ~frame_producer() {}
+    frame_producer()          = default;
+    virtual ~frame_producer() = default;
 
     draw_frame receive(const video_field field, int nb_samples)
     {
@@ -90,7 +86,7 @@ class frame_producer
 
     virtual core::monitor::state state() const = 0;
     virtual std::wstring         print() const = 0;
-    virtual std::wstring         name() const = 0;
+    virtual std::wstring         name() const  = 0;
     virtual uint32_t             frame_number() const { return frame_number_; }
     virtual uint32_t             nb_frames() const { return std::numeric_limits<uint32_t>::max(); }
     virtual draw_frame           last_frame(const video_field field)
@@ -109,7 +105,13 @@ class frame_producer
     }
     virtual void                            leading_producer(const spl::shared_ptr<frame_producer>&) {}
     virtual spl::shared_ptr<frame_producer> following_producer() const { return core::frame_producer::empty(); }
-    virtual boost::optional<int64_t>        auto_play_delta() const { return boost::none; }
+    virtual std::optional<int64_t>          auto_play_delta() const { return {}; }
+
+    /**
+     * Some producers take a couple of frames before they produce frames.
+     * While this returns false, the previous producer will be left running for a limited number of frames.
+     */
+    virtual bool is_ready() = 0;
 };
 
 class const_producer : public core::frame_producer
@@ -147,6 +149,8 @@ class const_producer : public core::frame_producer
         static const monitor::state empty;
         return empty;
     }
+
+    bool is_ready() override { return true; }
 };
 
 class frame_producer_registry;

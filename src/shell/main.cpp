@@ -21,13 +21,14 @@
 
 // tbbmalloc_proxy:
 // Replace the standard memory allocation routines in Microsoft* C/C++ RTL
-// (malloc/free, global new/delete, etc.) with the TBB memory allocator.
+// (malloc/free, global new/delete, etc.) with the TBB memory allocator
+// as the default allocator suffers from low performance.
 
 #if defined _DEBUG && defined _MSC_VER
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 #include <stdlib.h>
-#else
+#elif defined _MSC_VER
 #include <tbb/tbbmalloc_proxy.h>
 #endif
 

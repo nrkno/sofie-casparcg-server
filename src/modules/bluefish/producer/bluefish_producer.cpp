@@ -646,6 +646,8 @@ struct bluefish_producer
         return frame;
     }
 
+    bool is_ready() { return !frame_buffer_.empty(); }
+
     std::wstring print() const
     {
         return model_name_ + L" [" + std::to_wstring(device_index_) + L"|" + format_desc_.name + L"]";
@@ -696,6 +698,15 @@ class bluefish_producer_proxy : public core::frame_producer
     {
         return producer_->get_frame(field);
     }
+
+    core::draw_frame first_frame(const core::video_field field) override { return receive_impl(field, 0); }
+
+    core::draw_frame last_frame(const core::video_field field) override
+    {
+        return core::draw_frame::still(producer_->get_frame(field));
+    }
+
+    bool is_ready() override { return producer_->is_ready(); }
 
     uint32_t nb_frames() const override { return length_; }
 

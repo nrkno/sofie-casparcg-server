@@ -8,6 +8,16 @@ On Windows we can use CMake to generate a .sln file and .vcproj files. On
 Linux CMake can generate make files or ninja files. Qt Creator has support for
 loading CMakeLists.txt files directly.
 
+# Dependency caching
+
+CMake will automatically download some dependencies as part of the build process.
+These are taken from https://github.com/CasparCG/dependencies/releases (make sure to expand the 'Assets' group under each release to see the files), most of which are direct copies of distributions from upstream.
+
+During the build, you can specify the CMake option `CASPARCG_DOWNLOAD_MIRROR` to download from an alternate HTTP server (such as an internally hosted mirror), or `CASPARCG_DOWNLOAD_CACHE` to use a specific path on disk for the local cache of these files, by default a folder called `external` will be created inside the build directory to cache these files.
+
+If you want to be able to build CasparCG offline, you may need to manually seed this cache. You can do so by placing the correct tar.gz or zip into a folder and using `CASPARCG_DOWNLOAD_CACHE` to tell CMake where to find it.
+You can figure out which files you need by looking at each of the `ExternalProject_Add` function calls inside of [Bootstrap_Linux.cmake](./src/CMakeModules/Bootstrap_Linux.cmake) or [Bootstrap_Windows.cmake](./src/CMakeModules/Bootstrap_Windows.cmake). Some of the ones listed are optional, depending on other CMake flags.
+
 # Windows
 
 ## Development using Visual Studio
@@ -48,23 +58,22 @@ _Note: if you ran docker with sudo, CasparCG server will not be able to run with
 
 ## Development
 
-1. Install Docker by following installation instructions from [Docker Docs][1]
-2. `git clone --single-branch --branch master https://github.com/CasparCG/server casparcg-server-master`
-3. `cd casparcg-server-master`
-4. Install dependencies, this can be done with `sudo ./tools/linux/install-dependencies`
-5. Extract Boost and FFmpeg from the docker images via `sudo ./tools/linux/extract-deps-from-docker`. Alternatively these can be prepared manually by following the steps laid out in each Dockerfile
-6. `mkdir build && cd build`
-7. `cmake ../src`
-8. `make -j8`
+Before beginning, check the build options section below, to decide if you want to use any to simplify or customise your build.
+
+1. `git clone --single-branch --branch master https://github.com/CasparCG/server casparcg-server-master`
+2. `cd casparcg-server-master`
+3. Install dependencies, this can be done with `sudo ./tools/linux/install-dependencies`
+4. `mkdir build && cd build`
+5. `cmake ../src`
+6. If not using system ffmpeg, run `./_deps/ffmpeg-lib-src/ffmpeg/install-ffmpeg-dependencies` to install the dependencies needed by the ffmpeg build
+7. `make -j8`
 
 If all goes to plan, a folder called 'staging' has been created with everything you need to run CasparCG server.
-
-[1]: https://docs.docker.com/install/linux/docker-ce/ubuntu/
 
 ## Build options
 
 -DENABLE_HTML=OFF - useful if you lack CEF, and would like to build without that module.
 
--DUSE_SYSTEM_BOOST - (Linux only) use the version of Boost from your OS.
+-DUSE_STATIC_BOOST=OFF - (Linux only) link against shared version of Boost.
 
 -DUSE_SYSTEM_FFMPEG - (Linux only) use the version of ffmpeg from your OS.

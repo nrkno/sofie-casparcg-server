@@ -40,10 +40,8 @@
 #include <common/timer.h>
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <boost/regex.hpp>
 
 #include <tbb/concurrent_queue.h>
@@ -58,6 +56,7 @@
 #include <include/cef_render_handler.h>
 #pragma warning(pop)
 
+#include <optional>
 #include <queue>
 #include <utility>
 
@@ -88,6 +87,7 @@ class html_client
     std::atomic<bool>                                           loaded_;
     std::queue<std::pair<std::int_least64_t, core::draw_frame>> frames_;
     mutable std::mutex                                          frames_mutex_;
+    const size_t                                                frames_max_size_ = 4;
     std::atomic<bool>                                           closing_;
 
     core::draw_frame   last_frame_;
@@ -112,7 +112,7 @@ class html_client
         graph_->set_color("dropped-frame", diagnostics::color(0.3f, 0.6f, 0.3f));
         graph_->set_color("late-frame", diagnostics::color(0.6f, 0.1f, 0.1f));
         graph_->set_color("overload", diagnostics::color(0.6f, 0.6f, 0.3f));
-        graph_->set_color("output-buffer", diagnostics::color(1.0f, 1.0f, 0.0f));
+        graph_->set_color("buffered-frames", diagnostics::color(0.2f, 0.9f, 0.9f));
         graph_->set_text(print());
         diagnostics::register_graph(graph_);
 
@@ -178,7 +178,7 @@ class html_client
             last_frame_      = std::move(frames_.front().second);
             frames_.pop();
 
-            graph_->set_value("output-buffer", static_cast<float>(frames_.size()) / static_cast<float>(4));
+            graph_->set_value("buffered-frames", (double)frames_.size() / frames_max_size_);
 
             return true;
         }
@@ -196,6 +196,12 @@ class html_client
     }
 
     core::draw_frame last_frame() const { return last_frame_; }
+
+    bool is_ready() const
+    {
+        std::lock_guard<std::mutex> lock(frames_mutex_);
+        return !frames_.empty() || last_frame_;
+    }
 
     void execute_javascript(const std::wstring& javascript)
     {
@@ -274,8 +280,8 @@ class html_client
         pixel_desc.planes.emplace_back(width, height, 4);
 
         core::mutable_frame frame = frame_factory_->create_frame(this, pixel_desc);
-        char* src   = (char*)buffer;
-        char* dst   = reinterpret_cast<char*>(frame.image_data(0).begin());
+        char*               src   = (char*)buffer;
+        char*               dst   = reinterpret_cast<char*>(frame.image_data(0).begin());
         test_timer_.restart();
 
 #ifdef WIN32
@@ -301,7 +307,7 @@ class html_client
                 frames_.pop();
                 graph_->set_tag(diagnostics::tag_severity::WARNING, "dropped-frame");
             }
-            graph_->set_value("output-buffer", static_cast<float>(frames_.size()) / static_cast<float>(4));
+            graph_->set_value("buffered-frames", (double)frames_.size() / frames_max_size_);
         }
     }
 
@@ -435,7 +441,7 @@ class html_producer : public core::frame_producer
         , url_(url)
     {
         html::invoke([&] {
-            const bool enable_gpu            = env::properties().get(L"configuration.html.enable-gpu", false);
+            const bool enable_gpu = env::properties().get(L"configuration.html.enable-gpu", false);
 
             client_ = new html_client(frame_factory, graph_, format_desc, enable_gpu, url_);
 
@@ -472,6 +478,14 @@ class html_producer : public core::frame_producer
     }
 
     core::draw_frame first_frame(const core::video_field field) override { return receive_impl(field, 0); }
+
+    bool is_ready() override
+    {
+        if (client_ != nullptr) {
+            return client_->is_ready();
+        }
+        return false;
+    }
 
     core::draw_frame last_frame(const core::video_field field) override
     {
@@ -526,8 +540,8 @@ spl::shared_ptr<core::frame_producer> create_cg_producer(const core::frame_produ
 
     const auto url = found_filename ? L"file://" + *found_filename : param_url;
 
-    boost::optional<int> width;
-    boost::optional<int> height;
+    std::optional<int> width;
+    std::optional<int> height;
     {
         auto u8_url = u8(url);
 

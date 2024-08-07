@@ -6,19 +6,6 @@ join_list("${CASPARCG_MODULE_INIT_STATEMENTS}" "\n" CASPARCG_MODULE_INIT_STATEME
 join_list("${CASPARCG_MODULE_UNINIT_STATEMENTS}" "\n" CASPARCG_MODULE_UNINIT_STATEMENTS)
 join_list("${CASPARCG_MODULE_COMMAND_LINE_ARG_INTERCEPTORS_STATEMENTS}" "\n" CASPARCG_MODULE_COMMAND_LINE_ARG_INTERCEPTORS_STATEMENTS)
 CONFIGURE_FILE ("${PROJECT_SOURCE_DIR}/included_modules.tmpl" "${CMAKE_BINARY_DIR}/generated/included_modules.h")
-CONFIGURE_FILE ("${PROJECT_SOURCE_DIR}/packages.config" "${CMAKE_CURRENT_BINARY_DIR}/packages.config")
-
-if (MSVC)
-	set(OS_SPECIFIC_SOURCES
-			resource.h
-			shell.rc
-			windows_specific.cpp
-	)
-else ()
-	set(OS_SPECIFIC_SOURCES
-			linux_specific.cpp
-	)
-endif ()
 
 set(SOURCES
 		casparcg.config
@@ -30,13 +17,27 @@ set(HEADERS
 		server.h
 )
 
-add_executable(casparcg ${SOURCES} ${HEADERS} ${OS_SPECIFIC_SOURCES})
+if (MSVC)
+	list(APPEND SOURCES
+			resource.h
+			shell.rc
+			windows_specific.cpp
+	)
+else ()
+	list(APPEND SOURCES
+			linux_specific.cpp
+	)
+endif ()
+
+
+add_executable(casparcg ${SOURCES} ${HEADERS})
 target_compile_features(casparcg PRIVATE cxx_std_17)
 target_include_directories(casparcg PRIVATE
     ..
     ${BOOST_INCLUDE_PATH}
     ${TBB_INCLUDE_PATH}
     )
+casparcg_add_build_dependencies(casparcg)
 
 source_group(sources ./*)
 add_dependencies(casparcg cef)
@@ -67,7 +68,7 @@ if (MSVC)
 		optimized sfml-graphics.lib
 		optimized sfml-window.lib
 		optimized sfml-system.lib
-
+		
 		avformat.lib
 		avcodec.lib
 		avutil.lib
@@ -80,11 +81,9 @@ else ()
 	target_link_libraries(casparcg
 		${Boost_LIBRARIES}
 		${TBB_LIBRARIES}
-		${TBB_MALLOC_LIBRARIES}
-		${TBB_MALLOC_PROXY_LIBRARIES}
 		${SFML_LIBRARIES}
 		${GLEW_LIBRARIES}
-		OpenGL::OpenGL
+		OpenGL::GL
 		${X11_LIBRARIES}
 		${FFMPEG_LIBRARIES}
 		dl
@@ -98,25 +97,60 @@ else ()
 endif ()
 
 add_custom_target(casparcg_copy_dependencies ALL)
-add_dependencies(casparcg_copy_dependencies cef)
+casparcg_add_build_dependencies(casparcg_copy_dependencies)
 
 set(OUTPUT_FOLDER "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
 add_custom_command(TARGET casparcg_copy_dependencies POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory \"${OUTPUT_FOLDER}\")
 
-
-
 if (MSVC)
-	foreach(FILE_TO_COPY ${CASPARCG_RUNTIME_DEPENDENCIES})
+	foreach(FILE_TO_COPY ${CASPARCG_RUNTIME_DEPENDENCIES_DEBUG})
 		get_filename_component(FOLDER_NAME "${FILE_TO_COPY}" NAME)
-		add_custom_command(TARGET casparcg_copy_dependencies POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"${FILE_TO_COPY}\" \"${OUTPUT_FOLDER}/\")
-		add_custom_command(TARGET casparcg_copy_dependencies POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"${FILE_TO_COPY}\" \"${CMAKE_CURRENT_BINARY_DIR}/\")
+		add_custom_command(
+			TARGET casparcg_copy_dependencies
+			POST_BUILD 
+			COMMAND if $(ConfigurationName) == Debug (
+				echo \"Copy Debug ${FILE_TO_COPY}\" &&
+				${CMAKE_COMMAND} -E copy \"${FILE_TO_COPY}\" \"${OUTPUT_FOLDER}/\" &&
+				${CMAKE_COMMAND} -E copy \"${FILE_TO_COPY}\" \"${CMAKE_CURRENT_BINARY_DIR}/\"
+			)
+		)
+	endforeach(FILE_TO_COPY)
+	foreach(FILE_TO_COPY ${CASPARCG_RUNTIME_DEPENDENCIES_RELEASE})
+		get_filename_component(FOLDER_NAME "${FILE_TO_COPY}" NAME)
+		add_custom_command(
+			TARGET casparcg_copy_dependencies
+			POST_BUILD 
+			COMMAND if $(ConfigurationName) NEQ Debug (
+				echo \"Copy Release ${FILE_TO_COPY}\" &&
+				${CMAKE_COMMAND} -E copy \"${FILE_TO_COPY}\" \"${OUTPUT_FOLDER}/\" &&
+				${CMAKE_COMMAND} -E copy \"${FILE_TO_COPY}\" \"${CMAKE_CURRENT_BINARY_DIR}/\"
+			)
+		)
 	endforeach(FILE_TO_COPY)
 
-	foreach(FILE_TO_COPY ${CASPARCG_RUNTIME_DEPENDENCIES_DIRS})
+	foreach(FILE_TO_COPY ${CASPARCG_RUNTIME_DEPENDENCIES_DEBUG_DIRS})
 		get_filename_component(FOLDER_NAME "${FILE_TO_COPY}" NAME)
-		message(STATUS "AAAC: ${FILE_TO_COPY} ${FOLDER_NAME}")
-		add_custom_command(TARGET casparcg_copy_dependencies POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory \"${FILE_TO_COPY}\" \"${OUTPUT_FOLDER}/${FOLDER_NAME}\")
-		add_custom_command(TARGET casparcg_copy_dependencies POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory \"${FILE_TO_COPY}\" \"${CMAKE_CURRENT_BINARY_DIR}/${FOLDER_NAME}\")
+		add_custom_command(
+			TARGET casparcg_copy_dependencies
+			POST_BUILD 
+			COMMAND if $(ConfigurationName) == Debug (
+				echo \"Copy Debug ${FILE_TO_COPY}\" &&
+				${CMAKE_COMMAND} -E copy_directory \"${FILE_TO_COPY}\" \"${OUTPUT_FOLDER}/${FOLDER_NAME}/\" &&
+				${CMAKE_COMMAND} -E copy_directory \"${FILE_TO_COPY}\" \"${CMAKE_CURRENT_BINARY_DIR}/${FOLDER_NAME}/\"
+			)
+		)
+	endforeach(FILE_TO_COPY)
+	foreach(FILE_TO_COPY ${CASPARCG_RUNTIME_DEPENDENCIES_RELEASE_DIRS})
+		get_filename_component(FOLDER_NAME "${FILE_TO_COPY}" NAME)
+		add_custom_command(
+			TARGET casparcg_copy_dependencies
+			POST_BUILD 
+			COMMAND if $(ConfigurationName) NEQ Debug (
+				echo \"Copy Release ${FILE_TO_COPY}\" &&
+				${CMAKE_COMMAND} -E copy_directory \"${FILE_TO_COPY}\" \"${OUTPUT_FOLDER}/${FOLDER_NAME}/\" &&
+				${CMAKE_COMMAND} -E copy_directory \"${FILE_TO_COPY}\" \"${CMAKE_CURRENT_BINARY_DIR}/${FOLDER_NAME}/\"
+			)
+		)
 	endforeach(FILE_TO_COPY)
 else ()
 	ADD_CUSTOM_COMMAND (TARGET casparcg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/shell/casparcg ${CMAKE_BINARY_DIR}/staging/bin/casparcg)
@@ -125,7 +159,7 @@ else ()
 	ADD_CUSTOM_COMMAND (TARGET casparcg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/shell/run.sh ${CMAKE_BINARY_DIR}/staging/run.sh)
 
 # Disabled as HTML module is disabled
-  if (ENABLE_HTML)
+  if (ENABLE_HTML AND NOT USE_SYSTEM_CEF)
 	ADD_CUSTOM_COMMAND (TARGET casparcg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CEF_RESOURCE_PATH}/locales ${CMAKE_BINARY_DIR}/staging/lib/locales)
 	ADD_CUSTOM_COMMAND (TARGET casparcg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CEF_RESOURCE_PATH}/chrome_100_percent.pak ${CMAKE_BINARY_DIR}/staging/lib/chrome_100_percent.pak)
 	ADD_CUSTOM_COMMAND (TARGET casparcg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CEF_RESOURCE_PATH}/chrome_200_percent.pak ${CMAKE_BINARY_DIR}/staging/lib/chrome_200_percent.pak)

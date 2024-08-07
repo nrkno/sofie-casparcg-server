@@ -38,6 +38,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/logic/tribool.hpp>
+#include <common/filesystem.h>
 
 #pragma warning(push, 1)
 
@@ -68,10 +69,10 @@ struct ffmpeg_producer : public core::frame_producer
                              std::wstring                         filename,
                              std::wstring                         vfilter,
                              std::wstring                         afilter,
-                             boost::optional<int64_t>             start,
-                             boost::optional<int64_t>             seek,
-                             boost::optional<int64_t>             duration,
-                             boost::optional<bool>                loop,
+                             std::optional<int64_t>               start,
+                             std::optional<int64_t>               seek,
+                             std::optional<int64_t>               duration,
+                             std::optional<bool>                  loop,
                              int                                  seekable)
         : filename_(filename)
         , frame_factory_(frame_factory)
@@ -120,6 +121,8 @@ struct ffmpeg_producer : public core::frame_producer
         return producer_->loop() ? std::numeric_limits<std::uint32_t>::max()
                                  : static_cast<std::uint32_t>(producer_->duration());
     }
+
+    bool is_ready() override { return producer_->is_ready(); }
 
     std::future<std::wstring> call(const std::vector<std::wstring>& params) override
     {
@@ -217,16 +220,9 @@ boost::tribool has_valid_extension(const boost::filesystem::path& filename)
     return boost::tribool(boost::indeterminate);
 }
 
-bool has_invalid_protocol(const boost::filesystem::path& filename)
+bool has_invalid_protocol(const std::wstring& filename)
 {
-    static const auto invalid_protocols = {L"ndi:"};
-
-    auto protocol = boost::to_lower_copy(filename.root_name().wstring());
-
-    if (std::find(invalid_protocols.begin(), invalid_protocols.end(), protocol) != invalid_protocols.end()) {
-        return true;
-    }
-    return false;
+    return boost::algorithm::istarts_with(filename, L"ndi://");
 }
 
 bool is_readable(const boost::filesystem::path& filename)
@@ -279,24 +275,6 @@ bool is_valid_file(const boost::filesystem::path& filename)
     return av_probe_input_format2(&pb, true, &score) != nullptr;
 }
 
-boost::filesystem::path probe_stem(const boost::filesystem::path& stem)
-{
-    auto parent = find_case_insensitive(stem.parent_path().wstring());
-
-    if (!parent)
-        return L"";
-
-    auto dir = boost::filesystem::path(*parent);
-    auto loc = std::locale(""); // Use system locale
-
-    for (auto it = boost::filesystem::directory_iterator(dir); it != boost::filesystem::directory_iterator(); ++it) {
-        if (boost::iequals(it->path().stem().wstring(), stem.filename().wstring(), loc) &&
-            is_valid_file(it->path().wstring()))
-            return it->path();
-    }
-    return L"";
-}
-
 spl::shared_ptr<core::frame_producer> create_producer(const core::frame_producer_dependencies& dependencies,
                                                       const std::vector<std::wstring>&         params)
 {
@@ -304,17 +282,11 @@ spl::shared_ptr<core::frame_producer> create_producer(const core::frame_producer
     auto path = name;
 
     if (!boost::contains(path, L"://")) {
-        auto mediaPath     = boost::filesystem::absolute(env::media_folder() + L"/" + path);
-        auto fullMediaPath = find_case_insensitive(mediaPath.generic_wstring());
-        if (fullMediaPath && is_valid_file(*fullMediaPath)) {
-            path = *fullMediaPath;
-        } else if (mediaPath.has_extension()) {
-            // If there is an extension, then we don't need to probe to find a matching file
-            path = L"";
-            name = L"";
+        auto fullMediaPath = find_file_within_dir_or_absolute(env::media_folder(), path, is_valid_file);
+        if (fullMediaPath) {
+            path = fullMediaPath->wstring();
         } else {
-            path = probe_stem(mediaPath).generic_wstring();
-            name += boost::filesystem::path(path).extension().wstring();
+            return core::frame_producer::empty();
         }
     } else if (!has_valid_extension(path) || has_invalid_protocol(path)) {
         return core::frame_producer::empty();
@@ -349,9 +321,9 @@ spl::shared_ptr<core::frame_producer> create_producer(const core::frame_producer
     boost::ireplace_all(filter_str, L"DEINTERLACE_LQ", L"SEPARATEFIELDS");
     boost::ireplace_all(filter_str, L"DEINTERLACE", L"YADIF=0:-1");
 
-    boost::optional<std::int64_t> start;
-    boost::optional<std::int64_t> seek2;
-    boost::optional<std::int64_t> duration;
+    std::optional<std::int64_t> start;
+    std::optional<std::int64_t> seek2;
+    std::optional<std::int64_t> duration;
 
     if (in != 0) {
         start = in;
@@ -364,9 +336,8 @@ spl::shared_ptr<core::frame_producer> create_producer(const core::frame_producer
         duration = out - in;
     }
 
-    // TODO (fix) use raw input?
-    auto vfilter = boost::to_lower_copy(get_param(L"VF", params, filter_str));
-    auto afilter = boost::to_lower_copy(get_param(L"AF", params, get_param(L"FILTER", params, L"")));
+    auto vfilter = get_param(L"VF", params, filter_str);
+    auto afilter = get_param(L"AF", params, get_param(L"FILTER", params, L""));
 
     try {
         auto producer = spl::make_shared<ffmpeg_producer>(dependencies.frame_factory,

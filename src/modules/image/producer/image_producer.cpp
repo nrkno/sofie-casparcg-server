@@ -41,13 +41,13 @@
 
 #include <common/array.h>
 #include <common/env.h>
+#include <common/filesystem.h>
 #include <common/log.h>
 #include <common/os/filesystem.h>
 #include <common/param.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/property_tree/ptree.hpp>
 
 #include <algorithm>
 #include <set>
@@ -89,10 +89,8 @@ struct image_producer : public core::frame_producer
     void load(const std::shared_ptr<FIBITMAP>& bitmap)
     {
         FreeImage_FlipVertical(bitmap.get());
-        core::pixel_format_desc desc;
-        desc.format = core::pixel_format::bgra;
-        desc.planes.push_back(
-            core::pixel_format_desc::plane(FreeImage_GetWidth(bitmap.get()), FreeImage_GetHeight(bitmap.get()), 4));
+        core::pixel_format_desc desc(core::pixel_format::bgra);
+        desc.planes.emplace_back(FreeImage_GetWidth(bitmap.get()), FreeImage_GetHeight(bitmap.get()), 4);
         auto frame = frame_factory_->create_frame(this, desc);
 
         std::copy_n(FreeImage_GetBits(bitmap.get()), frame.image_data(0).size(), frame.image_data(0).begin());
@@ -104,6 +102,8 @@ struct image_producer : public core::frame_producer
     core::draw_frame last_frame(const core::video_field field) override { return frame_; }
 
     core::draw_frame first_frame(const core::video_field field) override { return frame_; }
+
+    bool is_ready() override { return true; }
 
     core::draw_frame receive_impl(const core::video_field field, int nb_samples) override
     {
@@ -120,18 +120,18 @@ struct image_producer : public core::frame_producer
     core::monitor::state state() const override { return state_; }
 };
 
-class ieq
-{
-    std::wstring test_;
-
-  public:
-    explicit ieq(std::wstring test)
-        : test_(std::move(test))
-    {
-    }
-
-    bool operator()(const std::wstring& elem) const { return boost::iequals(elem, test_); }
-};
+// class ieq
+//{
+//     std::wstring test_;
+//
+//   public:
+//     explicit ieq(std::wstring test)
+//         : test_(std::move(test))
+//     {
+//     }
+//
+//     bool operator()(const std::wstring& elem) const { return boost::iequals(elem, test_); }
+// };
 
 spl::shared_ptr<core::frame_producer> create_producer(const core::frame_producer_dependencies& dependencies,
                                                       const std::vector<std::wstring>&         params)
@@ -200,31 +200,13 @@ spl::shared_ptr<core::frame_producer> create_producer(const core::frame_producer
     //    return spl::make_shared<image_producer>(dependencies.frame_factory, png_data.data(), png_data.size(), length);
     //}
 
-    std::wstring filename = env::media_folder() + params.at(0);
-
-    auto resolvedFilename = caspar::find_case_insensitive(filename);
-    if (resolvedFilename && boost::filesystem::is_regular_file(*resolvedFilename)) {
-        auto ext = boost::to_lower_copy(boost::filesystem::path(filename).extension().wstring());
-        if (std::find(supported_extensions().begin(), supported_extensions().end(), ext) ==
-            supported_extensions().end()) {
-            return core::frame_producer::empty();
-        }
-    } else {
-        auto ext = std::find_if(
-            supported_extensions().begin(), supported_extensions().end(), [&](const std::wstring& ex) -> bool {
-                auto file = caspar::find_case_insensitive(boost::filesystem::path(filename).wstring() + ex);
-
-                return static_cast<bool>(file);
-            });
-
-        if (ext == supported_extensions().end()) {
-            return core::frame_producer::empty();
-        }
-
-        filename = *caspar::find_case_insensitive(filename + *ext);
+    std::optional<boost::filesystem::path> filename =
+        find_file_within_dir_or_absolute(env::media_folder(), params.at(0), is_valid_file);
+    if (!filename) {
+        return core::frame_producer::empty();
     }
 
-    return spl::make_shared<image_producer>(dependencies.frame_factory, filename, length);
+    return spl::make_shared<image_producer>(dependencies.frame_factory, filename->wstring(), length);
 }
 
 }} // namespace caspar::image

@@ -14,24 +14,7 @@ jobs:
             packages: write
 
         steps:
-            - uses: actions/checkout@v3
-
-            - name: Login to GitHub Container Registry
-              if: ${{ env.has_token == 'true' }}
-              uses: docker/login-action@v2
-              with:
-                  registry: ghcr.io
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
-              env:
-                  has_token: ${{ !!secrets.GITHUB_TOKEN && github.repository_owner == 'CasparCG' && github.event_name == 'push' }}
-
-            - name: Prepare dependencies
-              run: |
-                  ./tools/linux/ensure-base-images
-              env:
-                  CI: 1
-                  CASPARCG_PUSH_IMAGES: ${{ !!secrets.GITHUB_TOKEN && github.repository_owner == 'CasparCG' && github.event_name == 'push' }}
+            - uses: actions/checkout@v4
 
             - name: Run build
               run: |
@@ -42,7 +25,7 @@ jobs:
                   CI: 1
 
             - name: Download media-scanner
-              uses: robinraju/release-downloader@v1.8
+              uses: robinraju/release-downloader@v1.10
               with:
                   repository: "casparcg/media-scanner"
                   latest: true
@@ -70,7 +53,7 @@ jobs:
                   echo "artifactname=$TARGET" >> $GITHUB_OUTPUT
 
                   # check if a release branch, or master, or a tag
-                  if [[ "${{ github.ref_name }}" == "master" || "${{ github.ref_name }}" == "2.3.x-lts" ]]
+                  if [[ "${{ github.ref_name }}" == "master" || "${{ github.ref_name }}" == "v2.4.x" ]]
                   then
                     # Only proceed if we have an sftp password
                     if [ -n "${{ secrets.SFTP_PASSWORD }}" ]
@@ -80,7 +63,7 @@ jobs:
                     fi
                   fi
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4
               with:
                   name: upload-artifact
                   path: ${{ steps.rename-build.outputs.artifactname }}

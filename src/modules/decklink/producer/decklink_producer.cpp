@@ -324,8 +324,8 @@ class decklink_producer : public IDeckLinkInputCallback
     spl::shared_ptr<diagnostics::graph> graph_;
     caspar::timer                       tick_timer_;
 
-    com_ptr<IDeckLink>                 decklink_   = get_device(device_index_);
-    com_iface_ptr<IDeckLinkInput>      input_      = iface_cast<IDeckLinkInput>(decklink_);
+    com_ptr<IDeckLink>                        decklink_   = get_device(device_index_);
+    com_iface_ptr<IDeckLinkInput>             input_      = iface_cast<IDeckLinkInput>(decklink_);
     com_iface_ptr<IDeckLinkProfileAttributes> attributes_ = iface_cast<IDeckLinkProfileAttributes>(decklink_);
 
     const std::wstring model_name_ = get_model_name(decklink_);
@@ -511,6 +511,7 @@ class decklink_producer : public IDeckLinkInputCallback
                 std::lock_guard<std::mutex> lock(state_mutex_);
                 state_["file/name"]              = model_name_;
                 state_["file/path"]              = device_index_;
+                state_["file/format"]            = format_desc_.name;
                 state_["file/audio/sample-rate"] = format_desc_.audio_sample_rate;
                 state_["file/audio/channels"]    = format_desc_.audio_channels;
                 state_["file/fps"]               = format_desc_.fps;
@@ -727,6 +728,12 @@ class decklink_producer : public IDeckLinkInputCallback
         }
     }
 
+    bool is_ready()
+    {
+        std::lock_guard<std::mutex> lock(buffer_mutex_);
+        return !buffer_.empty() || last_frame_;
+    }
+
     std::wstring print() const
     {
         return model_name_ + L" [" + std::to_wstring(device_index_) + L"|" + input_format.name + L"]";
@@ -790,6 +797,8 @@ class decklink_producer_proxy : public core::frame_producer
     {
         return core::draw_frame::still(producer_->get_frame(field, true));
     }
+
+    bool is_ready() override { return producer_->is_ready(); }
 
     uint32_t nb_frames() const override { return length_; }
 

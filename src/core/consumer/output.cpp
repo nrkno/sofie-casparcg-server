@@ -28,10 +28,9 @@
 #include <common/except.h>
 #include <common/memory.h>
 
-#include <boost/optional.hpp>
-
 #include <chrono>
 #include <map>
+#include <optional>
 #include <thread>
 #include <utility>
 
@@ -49,7 +48,7 @@ struct output::impl
     std::mutex                                     consumers_mutex_;
     std::map<int, spl::shared_ptr<frame_consumer>> consumers_;
 
-    boost::optional<time_point_t> time_;
+    std::optional<time_point_t> time_;
 
   public:
     impl(const spl::shared_ptr<diagnostics::graph>& graph, video_format_desc format_desc, int channel_index)
@@ -102,7 +101,17 @@ struct output::impl
                 }
             }
             format_desc_ = format_desc;
-            time_        = boost::none;
+            time_        = {};
+            return;
+        }
+
+        if (input_frame1.size() != format_desc_.size) {
+            CASPAR_LOG(warning) << print() << L" Invalid input frame size.";
+            return;
+        }
+
+        if (input_frame2 && input_frame2.size() != format_desc_.size) {
+            CASPAR_LOG(warning) << print() << L" Invalid input frame size.";
             return;
         }
 
@@ -131,10 +140,11 @@ struct output::impl
                     ++it;
                 } catch (...) {
                     CASPAR_LOG_CURRENT_EXCEPTION();
-                    it = consumers.erase(it);
+                    auto index = it->first;
+                    it         = consumers.erase(it);
 
                     std::lock_guard<std::mutex> lock(consumers_mutex_);
-                    consumers_.erase(it->first);
+                    consumers_.erase(index);
                 }
             }
 
@@ -165,7 +175,7 @@ struct output::impl
 
         monitor::state state;
         for (auto& p : consumers) {
-            state["port"][p.first] = p.second->state();
+            state["port"][p.first]             = p.second->state();
             state["port"][p.first]["consumer"] = p.second->name();
         }
         state_ = std::move(state);

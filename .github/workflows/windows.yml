@@ -11,16 +11,10 @@ jobs:
         runs-on: windows-2019
 
         steps:
-            - uses: actions/checkout@v3
-
-            - name: Cache nuget
-              uses: actions/cache@v3
-              with:
-                  path: dist/packages
-                  key: ${{ runner.os }}-nuget
+            - uses: actions/checkout@v4
 
             - name: Download media-scanner
-              uses: robinraju/release-downloader@v1.8
+              uses: robinraju/release-downloader@v1.10
               with:
                   repository: "casparcg/media-scanner"
                   latest: true
@@ -52,7 +46,7 @@ jobs:
                   echo "artifactname=$TARGET" >> $GITHUB_OUTPUT
                     
                   # check if a release branch, or master, or a tag
-                  if [[ "${{ github.ref_name }}" == "master" || "${{ github.ref_name }}" == "2.3.x-lts" ]]
+                  if [[ "${{ github.ref_name }}" == "master" || "${{ github.ref_name }}" == "v2.4.x" ]]
                   then
                     # Only report if we have an sftp password
                     if [ -n "${{ secrets.SFTP_PASSWORD }}" ]
@@ -61,7 +55,7 @@ jobs:
                     fi
                   fi
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4
               with:
                   name: upload-artifact
                   path: ${{ steps.rename-build.outputs.artifactname }}

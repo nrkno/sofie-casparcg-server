@@ -22,9 +22,9 @@
 
 #include "image_scroll_producer.h"
 
+#if defined(_MSC_VER)
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#if defined(_MSC_VER)
 #include <windows.h>
 #endif
 #include <FreeImage.h>
@@ -45,6 +45,7 @@
 #include <common/array.h>
 #include <common/env.h>
 #include <common/except.h>
+#include <common/filesystem.h>
 #include <common/future.h>
 #include <common/log.h>
 #include <common/os/filesystem.h>
@@ -54,14 +55,14 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <boost/scoped_array.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <optional>
+#include <utility>
 
 namespace caspar { namespace image {
 
@@ -76,12 +77,12 @@ class speed_tweener
 
   public:
     speed_tweener() = default;
-    speed_tweener(double source, double dest, int duration, const tweener& tween)
+    speed_tweener(double source, double dest, int duration, tweener tween)
         : source_(source)
         , dest_(dest)
         , duration_(duration)
         , time_(0)
-        , tweener_(tween)
+        , tweener_(std::move(tween))
     {
     }
 
@@ -115,28 +116,25 @@ struct image_scroll_producer : public core::frame_producer
     int                           width_;
     int                           height_;
 
-    double                                    delta_ = 0.0;
-    speed_tweener                             speed_;
-    boost::optional<boost::posix_time::ptime> end_time_;
-    core::draw_frame                          frame_;
+    double                                  delta_ = 0.0;
+    speed_tweener                           speed_;
+    std::optional<boost::posix_time::ptime> end_time_;
+    core::draw_frame                        frame_;
 
-    int  start_offset_x_ = 0;
-    int  start_offset_y_ = 0;
-    bool progressive_;
+    int start_offset_x_ = 0;
+    int start_offset_y_ = 0;
 
     explicit image_scroll_producer(const spl::shared_ptr<core::frame_factory>& frame_factory,
-                                   const core::video_format_desc&              format_desc,
-                                   const std::wstring&                         filename,
+                                   core::video_format_desc                     format_desc,
+                                   std::wstring                                filename,
                                    double                                      s,
                                    double                                      duration,
-                                   boost::optional<boost::posix_time::ptime>   end_time,
+                                   std::optional<boost::posix_time::ptime>     end_time,
                                    int                                         motion_blur_px         = 0,
-                                   bool                                        premultiply_with_alpha = false,
-                                   bool                                        progressive            = false)
-        : filename_(filename)
-        , format_desc_(format_desc)
+                                   bool                                        premultiply_with_alpha = false)
+        : filename_(std::move(filename))
+        , format_desc_(std::move(format_desc))
         , end_time_(std::move(end_time))
-        , progressive_(progressive)
     {
         double speed = s;
 
@@ -203,8 +201,8 @@ struct image_scroll_producer : public core::frame_producer
             int n = 1;
 
             while (count > 0) {
-                core::pixel_format_desc desc = core::pixel_format::bgra;
-                desc.planes.push_back(core::pixel_format_desc::plane(width_, format_desc_.height, 4));
+                core::pixel_format_desc desc = core::pixel_format_desc(core::pixel_format::bgra);
+                desc.planes.emplace_back(width_, format_desc_.height, 4);
                 auto frame = frame_factory->create_frame(this, desc);
 
                 if (count >= frame.image_data(0).size()) {
@@ -228,8 +226,8 @@ struct image_scroll_producer : public core::frame_producer
         } else if (horizontal) {
             int i = 0;
             while (count > 0) {
-                core::pixel_format_desc desc = core::pixel_format::bgra;
-                desc.planes.push_back(core::pixel_format_desc::plane(format_desc_.width, height_, 4));
+                core::pixel_format_desc desc = core::pixel_format_desc(core::pixel_format::bgra);
+                desc.planes.emplace_back(format_desc_.width, height_, 4);
                 auto frame = frame_factory->create_frame(this, desc);
                 if (count >= frame.image_data(0).size()) {
                     for (int y = 0; y < height_; ++y)
@@ -250,7 +248,7 @@ struct image_scroll_producer : public core::frame_producer
                     count = 0;
                 }
 
-                frames_.push_back(core::draw_frame(std::move(frame)));
+                frames_.emplace_back(std::move(frame));
             }
 
             std::reverse(frames_.begin(), frames_.end());
@@ -375,7 +373,7 @@ struct image_scroll_producer : public core::frame_producer
             auto seconds = diff.total_seconds();
 
             set_speed(-speed_from_duration(static_cast<double>(seconds)));
-            end_time_ = boost::none;
+            end_time_ = {};
         } else
             delta_ += speed_.fetch_and_tick();
     }
@@ -404,6 +402,8 @@ struct image_scroll_producer : public core::frame_producer
     }
 
     core::monitor::state state() const override { return state_; }
+
+    bool is_ready() override { return !frames_.empty(); }
 };
 
 spl::shared_ptr<core::frame_producer> create_scroll_producer(const core::frame_producer_dependencies& dependencies,
@@ -413,22 +413,15 @@ spl::shared_ptr<core::frame_producer> create_scroll_producer(const core::frame_p
         return core::frame_producer::empty();
     }
 
-    std::wstring filename = env::media_folder() + params.at(0);
-
-    auto ext =
-        std::find_if(supported_extensions().begin(), supported_extensions().end(), [&](const std::wstring& ex) -> bool {
-            auto file =
-                caspar::find_case_insensitive(boost::filesystem::path(filename).replace_extension(ex).wstring());
-
-            return static_cast<bool>(file);
-        });
-
-    if (ext == supported_extensions().end())
+    std::optional<boost::filesystem::path> filename =
+        find_file_within_dir_or_absolute(env::media_folder(), params.at(0), is_valid_file);
+    if (!filename) {
         return core::frame_producer::empty();
+    }
 
-    double                                    duration = 0.0;
-    double                                    speed    = get_param(L"SPEED", params, 0.0);
-    boost::optional<boost::posix_time::ptime> end_time;
+    double                                  duration = 0.0;
+    double                                  speed    = get_param(L"SPEED", params, 0.0);
+    std::optional<boost::posix_time::ptime> end_time;
 
     if (speed == 0)
         duration = get_param(L"DURATION", params, 0.0);
@@ -447,17 +440,15 @@ spl::shared_ptr<core::frame_producer> create_scroll_producer(const core::frame_p
     int motion_blur_px = get_param(L"BLUR", params, 0);
 
     bool premultiply_with_alpha = contains_param(L"PREMULTIPLY", params);
-    bool progressive            = contains_param(L"PROGRESSIVE", params);
 
     return spl::make_shared<image_scroll_producer>(dependencies.frame_factory,
                                                    dependencies.format_desc,
-                                                   *caspar::find_case_insensitive(filename + *ext),
+                                                   filename->wstring(),
                                                    -speed,
                                                    -duration,
                                                    end_time,
                                                    motion_blur_px,
-                                                   premultiply_with_alpha,
-                                                   progressive);
+                                                   premultiply_with_alpha);
 }
 
 }} // namespace caspar::image

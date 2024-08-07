@@ -509,7 +509,7 @@ struct ffmpeg_consumer : public core::frame_consumer
             try {
                 std::map<std::string, std::string> options;
                 {
-                    static boost::regex opt_exp("-(?<NAME>[^-\\s]+)(\\s+(?<VALUE>[^\\s]+))?");
+                    static boost::regex opt_exp("-(?<NAME>[^\\s]+)(\\s+(?<VALUE>[^\\s]+))?");
                     for (auto it = boost::sregex_iterator(args_.begin(), args_.end(), opt_exp);
                          it != boost::sregex_iterator();
                          ++it) {
@@ -552,7 +552,7 @@ struct ffmpeg_consumer : public core::frame_consumer
 
                 CASPAR_SCOPE_EXIT { avformat_free_context(oc); };
 
-                boost::optional<Stream> video_stream;
+                std::optional<Stream> video_stream;
                 if (oc->oformat->video_codec != AV_CODEC_ID_NONE) {
                     if (oc->oformat->video_codec == AV_CODEC_ID_H264 && options.find("preset:v") == options.end()) {
                         options["preset:v"] = "veryfast";
@@ -565,7 +565,7 @@ struct ffmpeg_consumer : public core::frame_consumer
                     }
                 }
 
-                boost::optional<Stream> audio_stream;
+                std::optional<Stream> audio_stream;
                 if (oc->oformat->audio_codec != AV_CODEC_ID_NONE) {
                     audio_stream.emplace(oc, ":a", oc->oformat->audio_codec, format_desc, realtime_, options);
                 }
@@ -715,7 +715,7 @@ struct ffmpeg_consumer : public core::frame_consumer
 
 spl::shared_ptr<core::frame_consumer> create_consumer(const std::vector<std::wstring>&     params,
                                                       const core::video_format_repository& format_repository,
-                                                      std::vector<spl::shared_ptr<core::video_channel>> channels)
+                                                      const std::vector<spl::shared_ptr<core::video_channel>>& channels)
 {
     if (params.size() < 2 || (!boost::iequals(params.at(0), L"STREAM") && !boost::iequals(params.at(0), L"FILE")))
         return core::frame_consumer::empty();
@@ -729,9 +729,9 @@ spl::shared_ptr<core::frame_consumer> create_consumer(const std::vector<std::wst
 }
 
 spl::shared_ptr<core::frame_consumer>
-create_preconfigured_consumer(const boost::property_tree::wptree&               ptree,
-                              const core::video_format_repository&              format_repository,
-                              std::vector<spl::shared_ptr<core::video_channel>> channels)
+create_preconfigured_consumer(const boost::property_tree::wptree&                      ptree,
+                              const core::video_format_repository&                     format_repository,
+                              const std::vector<spl::shared_ptr<core::video_channel>>& channels)
 {
     return spl::make_shared<ffmpeg_consumer>(u8(ptree.get<std::wstring>(L"path", L"")),
                                              u8(ptree.get<std::wstring>(L"args", L"")),

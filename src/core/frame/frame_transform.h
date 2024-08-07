@@ -25,9 +25,8 @@
 
 #include <core/mixer/image/blend_modes.h>
 
-#include <boost/optional.hpp>
-
 #include <array>
+#include <optional>
 
 namespace caspar { namespace core {
 
@@ -160,7 +159,7 @@ class tweened_transform
   public:
     tweened_transform() = default;
 
-    tweened_transform(const frame_transform& source, const frame_transform& dest, int duration, const tweener& tween);
+    tweened_transform(const frame_transform& source, const frame_transform& dest, int duration, tweener tween);
 
     const frame_transform& dest() const;
 
@@ -168,6 +167,6 @@ class tweened_transform
     void            tick(int num);
 };
 
-boost::optional<chroma::legacy_type> get_chroma_mode(const std::wstring& str);
+std::optional<chroma::legacy_type> get_chroma_mode(const std::wstring& str);
 
 }} // namespace caspar::core

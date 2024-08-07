@@ -54,6 +54,8 @@
 #include <core/producer/transition/transition_producer.h>
 #include <core/video_format.h>
 
+#include <protocol/osc/client.h>
+
 #include <algorithm>
 #include <fstream>
 #include <future>
@@ -187,8 +189,8 @@ std::wstring get_sub_directory(const std::wstring& base_folder, const std::wstri
 std::vector<spl::shared_ptr<core::video_channel>> get_channels(const command_context& ctx)
 {
     std::vector<spl::shared_ptr<core::video_channel>> result;
-    for (auto& cc : ctx.channels) {
-        result.push_back(spl::make_shared_ptr(cc.raw_channel));
+    for (auto& cc : *ctx.channels) {
+        result.emplace_back(cc.raw_channel);
     }
     return result;
 }
@@ -280,26 +282,28 @@ std::wstring loadbg_command(command_context& ctx)
     bool auto_play = contains_param(L"AUTO", ctx.parameters);
 
     try {
-        auto pFP = ctx.static_context->producer_registry->create_producer(get_producer_dependencies(channel, ctx),
-                                                                          ctx.parameters);
+        auto new_producer = ctx.static_context->producer_registry->create_producer(
+            get_producer_dependencies(channel, ctx), ctx.parameters);
 
-        if (pFP == frame_producer::empty())
-            CASPAR_THROW_EXCEPTION(file_not_found() << msg_info(ctx.parameters.size() > 0 ? ctx.parameters[0] : L""));
+        if (new_producer == frame_producer::empty())
+            CASPAR_THROW_EXCEPTION(file_not_found() << msg_info(!ctx.parameters.empty() ? ctx.parameters[0] : L""));
 
         spl::shared_ptr<frame_producer> transition_producer = frame_producer::empty();
         transition_info                 transitionInfo;
         sting_info                      stingInfo;
 
         if (try_match_sting(ctx.parameters, stingInfo)) {
-            transition_producer = create_sting_producer(get_producer_dependencies(channel, ctx), pFP, stingInfo);
+            transition_producer =
+                create_sting_producer(get_producer_dependencies(channel, ctx), new_producer, stingInfo);
         } else {
             std::wstring message;
-            for (size_t n = 0; n < ctx.parameters.size(); ++n)
-                message += boost::to_upper_copy(ctx.parameters[n]) + L" ";
+            for (std::wstring& parameter : ctx.parameters) {
+                message += boost::to_upper_copy(parameter) + L" ";
+            }
 
-            // Always fallback to transition
+            // Try other transitions
             try_match_transition(message, transitionInfo);
-            transition_producer = create_transition_producer(pFP, transitionInfo);
+            transition_producer = create_transition_producer(new_producer, transitionInfo);
         }
 
         // TODO - we should pass the format into load(), so that we can catch it having changed since the producer was
@@ -327,11 +331,11 @@ std::wstring load_command(command_context& ctx)
         ctx.channel.stage->preview(ctx.layer_index());
     } else {
         try {
-            auto pFP = ctx.static_context->producer_registry->create_producer(
+            auto new_producer = ctx.static_context->producer_registry->create_producer(
                 get_producer_dependencies(ctx.channel.raw_channel, ctx), ctx.parameters);
-            auto pFP2 = create_transition_producer(pFP, transition_info{});
+            auto transition_producer = create_transition_producer(new_producer, transition_info{});
 
-            ctx.channel.stage->load(ctx.layer_index(), pFP2, true);
+            ctx.channel.stage->load(ctx.layer_index(), transition_producer, true);
         } catch (file_not_found&) {
             if (contains_param(L"CLEAR_ON_404", ctx.parameters)) {
                 ctx.channel.stage->load(
@@ -392,10 +396,34 @@ std::wstring clear_command(command_context& ctx)
 
 std::wstring clear_all_command(command_context& ctx)
 {
-    for (size_t n = 0; n < ctx.channels.size(); ++n)
-        ctx.channels.at(n).stage->clear();
+    for (auto& ch : *ctx.channels) {
+        ch.stage->clear();
+    }
 
     return L"202 CLEAR ALL OK\r\n";
+}
+
+std::future<std::wstring> callbg_command(command_context& ctx)
+{
+    const auto result = ctx.channel.stage->callbg(ctx.layer_index(), ctx.parameters).share();
+
+    // TODO: because of std::async deferred timed waiting does not work
+
+    /*auto wait_res = result.wait_for(std::chrono::seconds(2));
+    if (wait_res == std::future_status::timeout)
+    CASPAR_THROW_EXCEPTION(timed_out());*/
+
+    return std::async(std::launch::deferred, [result]() -> std::wstring {
+        std::wstring res = result.get();
+
+        std::wstringstream replyString;
+        if (res.empty())
+            replyString << L"202 CALLBG OK\r\n";
+        else
+            replyString << L"201 CALLBG OK\r\n" << res << L"\r\n";
+
+        return replyString.str();
+    });
 }
 
 std::future<std::wstring> call_command(command_context& ctx)
@@ -429,14 +457,14 @@ std::wstring swap_command(command_context& ctx)
         std::vector<std::wstring> strs;
         boost::split(strs, ctx.parameters[0], boost::is_any_of(L"-"));
 
-        auto ch2 = ctx.channels.at(std::stoi(strs.at(0)) - 1);
+        auto ch2 = ctx.channels->at(std::stoi(strs.at(0)) - 1);
 
         int l1 = ctx.layer_index();
         int l2 = std::stoi(strs.at(1));
 
         ctx.channel.stage->swap_layer(l1, l2, ch2.stage, swap_transforms);
     } else {
-        auto ch2 = ctx.channels.at(std::stoi(ctx.parameters[0]) - 1);
+        auto ch2 = ctx.channels->at(std::stoi(ctx.parameters[0]) - 1);
         ctx.channel.stage->swap_layers(ch2.stage, swap_transforms);
     }
 
@@ -816,11 +844,12 @@ class transforms_applier
 
     std::future<void> commit_deferred()
     {
-        const auto f = ctx_.channel.stage->apply_transforms(deferred_transforms_[ctx_.channel_index]).share();
+        const int  channel_index = ctx_.channel_index;
+        const auto f             = ctx_.channel.stage->apply_transforms(deferred_transforms_[channel_index]).share();
 
         return std::async(std::launch::deferred, [=]() {
             f.get();
-            deferred_transforms_[ctx_.channel_index].clear();
+            deferred_transforms_[channel_index].clear();
         });
     }
 
@@ -1315,8 +1344,11 @@ std::wstring mixer_grid_command(command_context& ctx)
 std::future<std::wstring> mixer_commit_command(command_context& ctx)
 {
     transforms_applier transforms(ctx);
-    auto               r = transforms.commit_deferred().share();
-    return std::async(std::launch::deferred, [r]() -> std::wstring { return L"202 MIXER OK\r\n"; });
+    const auto         r = transforms.commit_deferred().share();
+    return std::async(std::launch::deferred, [r]() -> std::wstring {
+        r.get();
+        return L"202 MIXER OK\r\n";
+    });
 }
 
 std::wstring mixer_clear_command(command_context& ctx)
@@ -1333,35 +1365,35 @@ std::wstring mixer_clear_command(command_context& ctx)
 
 std::wstring channel_grid_command(command_context& ctx)
 {
-    int  index = 1;
-    auto self  = ctx.channels.back();
+    int   index = 1;
+    auto& self  = ctx.channels->back();
 
     core::diagnostics::scoped_call_context save;
-    core::diagnostics::call_context::for_thread().video_channel = ctx.channels.size();
+    core::diagnostics::call_context::for_thread().video_channel = ctx.channels->size();
 
     std::vector<std::wstring> params;
-    params.push_back(L"SCREEN");
-    params.push_back(L"0");
-    params.push_back(L"NAME");
-    params.push_back(L"Channel Grid Window");
+    params.emplace_back(L"SCREEN");
+    params.emplace_back(L"0");
+    params.emplace_back(L"NAME");
+    params.emplace_back(L"Channel Grid Window");
     auto screen = ctx.static_context->consumer_registry->create_consumer(
         params, ctx.static_context->format_repository, get_channels(ctx));
 
     self.raw_channel->output().add(screen);
 
-    for (auto& channel : ctx.channels) {
-        if (channel.raw_channel != self.raw_channel) {
+    for (auto& ch : *ctx.channels) {
+        if (ch.raw_channel != self.raw_channel) {
             core::diagnostics::call_context::for_thread().layer = index;
             auto producer = ctx.static_context->producer_registry->create_producer(
                 get_producer_dependencies(self.raw_channel, ctx),
-                L"route://" + std::to_wstring(channel.raw_channel->index()));
+                L"route://" + std::to_wstring(ch.raw_channel->index()));
             self.stage->load(index, producer, false);
             self.stage->play(index);
             index++;
         }
     }
 
-    auto num_channels       = ctx.channels.size() - 1;
+    auto num_channels       = ctx.channels->size() - 1;
     int  square_side_length = std::ceil(std::sqrt(num_channels));
 
     auto ctx2 =
@@ -1488,8 +1520,8 @@ std::wstring info_command(command_context& ctx)
     // This is needed for backwards compatibility with old clients
     replyString << L"200 INFO OK\r\n";
 
-    for (size_t n = 0; n < ctx.channels.size(); ++n) {
-        replyString << n + 1 << L" " << ctx.channels.at(n).raw_channel->stage()->video_format_desc().name
+    for (auto& ch : *ctx.channels) {
+        replyString << ch.raw_channel->index() << L" " << ch.raw_channel->stage()->video_format_desc().name
                     << L" PLAYING\r\n";
     }
     replyString << L"\r\n";
@@ -1558,7 +1590,7 @@ std::wstring restart_command(command_context& ctx)
 std::wstring lock_command(command_context& ctx)
 {
     int  channel_index = std::stoi(ctx.parameters.at(0)) - 1;
-    auto lock          = ctx.channels.at(channel_index).lock;
+    auto lock          = ctx.channels->at(channel_index).lock;
     auto command       = boost::to_upper_copy(ctx.parameters.at(1));
 
     if (command == L"ACQUIRE") {
@@ -1622,9 +1654,50 @@ std::wstring gl_gc_command(command_context& ctx)
     return L"202 GL GC OK\r\n";
 }
 
+std::wstring get_osc_subscription_token(unsigned short port)
+{
+    std::wstringstream token;
+    token << "osc-sub-" << port;
+    return token.str();
+}
+
+std::wstring osc_subscribe_command(command_context& ctx)
+{
+    using namespace boost::asio::ip;
+
+    unsigned short port = 0;
+    try {
+        port = std::stoi(ctx.parameters.at(0));
+    } catch (...) {
+        return L"403 OSC SUBSCRIBE BAD PORT\r\n";
+    }
+
+    auto subscription = ctx.static_context->osc_client->get_subscription_token(
+        udp::endpoint(address_v4::from_string(u8(ctx.client->address())), port));
+
+    ctx.client->add_lifecycle_bound_object(get_osc_subscription_token(port), subscription);
+
+    return L"202 OSC SUBSCRIBE OK\r\n";
+}
+
+std::wstring osc_unsubscribe_command(command_context& ctx)
+{
+    unsigned short port = 0;
+    try {
+        port = std::stoi(ctx.parameters.at(0));
+    } catch (...) {
+        return L"403 OSC UNSUBSCRIBE BAD PORT\r\n";
+    }
+
+    ctx.client->remove_lifecycle_bound_object(get_osc_subscription_token(port));
+
+    return L"202 OSC UNSUBSCRIBE OK\r\n";
+}
+
 void register_commands(std::shared_ptr<amcp_command_repository_wrapper>& repo)
 {
     repo->register_channel_command(L"Basic Commands", L"LOADBG", loadbg_command, 1);
+    repo->register_channel_command(L"Basic Commands", L"CALLBG", callbg_command, 1);
     repo->register_channel_command(L"Basic Commands", L"LOAD", load_command, 0);
     repo->register_channel_command(L"Basic Commands", L"PLAY", play_command, 0);
     repo->register_channel_command(L"Basic Commands", L"PAUSE", pause_command, 0);
@@ -1697,5 +1770,8 @@ void register_commands(std::shared_ptr<amcp_command_repository_wrapper>& repo)
     repo->register_command(L"Query Commands", L"INFO PATHS", info_paths_command, 0);
     repo->register_command(L"Query Commands", L"GL INFO", gl_info_command, 0);
     repo->register_command(L"Query Commands", L"GL GC", gl_gc_command, 0);
+
+    repo->register_command(L"Query Commands", L"OSC SUBSCRIBE", osc_subscribe_command, 1);
+    repo->register_command(L"Query Commands", L"OSC UNSUBSCRIBE", osc_unsubscribe_command, 1);
 }
 }}} // namespace caspar::protocol::amcp

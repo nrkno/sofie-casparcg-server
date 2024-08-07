@@ -27,12 +27,25 @@
 #else
 #ifdef _MSC_VER
 #include <intrin.h>
+#include <tbb/scalable_allocator.h>
 #else
 #include <tmmintrin.h>
 #endif
 #endif
 
 namespace caspar {
+
+#ifdef _MSC_VER
+static std::shared_ptr<void> create_aligned_buffer(size_t size)
+{
+    return std::shared_ptr<void>(scalable_aligned_malloc(size, 64), scalable_aligned_free);
+}
+#else
+static std::shared_ptr<void> create_aligned_buffer(size_t size)
+{
+    return std::shared_ptr<void>(aligned_alloc(64, size), free);
+}
+#endif
 
 static void* aligned_memshfl(void* dest, const void* source, size_t count, int m1, int m2, int m3, int m4)
 {

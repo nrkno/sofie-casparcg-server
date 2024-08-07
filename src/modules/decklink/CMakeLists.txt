@@ -3,6 +3,9 @@ project (decklink)
 
 set(SOURCES
 		consumer/decklink_consumer.cpp
+		consumer/frame.cpp
+		consumer/config.cpp
+		consumer/monitor.cpp
 
 		producer/decklink_producer.cpp
 
@@ -10,6 +13,9 @@ set(SOURCES
 )
 set(HEADERS
 		consumer/decklink_consumer.h
+		consumer/frame.h
+		consumer/config.h
+		consumer/monitor.h
 
 		producer/decklink_producer.h
 
@@ -20,13 +26,13 @@ set(HEADERS
 		StdAfx.h
 )
 if (MSVC)
-	set(OS_SPECIFIC_SOURCES
+	list(APPEND HEADERS
 			interop/DeckLinkAPI_i.c
 			interop/DeckLinkAPI.h
 			interop/DeckLinkAPIVersion.h
 	)
 else()
-	set(OS_SPECIFIC_SOURCES
+	list(APPEND HEADERS
 			linux_interop/DeckLinkAPIConfiguration.h
 			linux_interop/DeckLinkAPIDeckControl.h
 			linux_interop/DeckLinkAPIDispatch.cpp
@@ -49,17 +55,16 @@ else()
 	)
 endif ()
 
-add_library(decklink ${SOURCES} ${HEADERS} ${OS_SPECIFIC_SOURCES})
-target_compile_features(decklink PRIVATE cxx_std_17)
+casparcg_add_module_project(decklink
+	SOURCES ${SOURCES} ${HEADERS}
+	INIT_FUNCTION "decklink::init"
+)
 target_include_directories(decklink PRIVATE
     ..
     ../..
-    ${BOOST_INCLUDE_PATH}
-    ${TBB_INCLUDE_PATH}
     ${FFMPEG_INCLUDE_PATH}
     )
 target_precompile_headers(decklink PRIVATE "StdAfx.h")
-configure_file("${PROJECT_SOURCE_DIR}/packages.config" "${CMAKE_CURRENT_BINARY_DIR}/packages.config")
 
 set_target_properties(decklink PROPERTIES FOLDER modules)
 source_group(sources ./*)
@@ -70,22 +75,15 @@ source_group(sources\\util util/*)
 
 if (MSVC)
 	target_link_libraries(decklink
-			common
-			core
 			ffmpeg
 
 			comsuppw
 	)
 else()
 	target_link_libraries(decklink
-			common
-			core
 			ffmpeg
 
 			dl
 	)
 endif ()
 
-casparcg_add_include_statement("modules/decklink/decklink.h")
-casparcg_add_init_statement("decklink::init" "decklink")
-casparcg_add_module_project("decklink")
