@@ -207,7 +207,28 @@ class decklink_frame : public IDeckLinkVideoFrame
 
     // IUnknown
 
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID, LPVOID*) override { return E_NOINTERFACE; }
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, LPVOID* ppv) override
+    {
+        REFIID iunknown = IID_IUnknown;
+
+        if (memcmp(&iid, &iunknown, sizeof(REFIID)) == 0)
+        {
+            *ppv = this;
+            AddRef();
+        }
+        else if (memcmp(&iid, &IID_IDeckLinkVideoFrame, sizeof(REFIID)) == 0)
+        {
+            *ppv = static_cast<IDeckLinkVideoFrame*>(this);
+            AddRef();
+        }
+        else
+        {
+            *ppv = nullptr;
+            return E_NOINTERFACE;
+        }
+
+        return S_OK;
+    }
 
     ULONG STDMETHODCALLTYPE AddRef() override { return ++ref_count_; }
 
