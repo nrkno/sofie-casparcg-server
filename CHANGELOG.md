@@ -1,3 +1,19 @@
+CasparCG 2.4.1 NRK
+==========================================
+
+This includes everything from upstream CasparCG v2.4.0 and some fixes from the v2.4.x branch (everything up to 2b9c040).
+
+## Changes relative to 2.4.0 NRK RC5
+
+### Core
+##### Fixes
+* Decklink: Fix support for 14.3 and later drivers
+
+### Producers
+##### Improvements
+* HTML: Update CEF to 131
+
+
 CasparCG 2.4.0 NRK RC5
 ==========================================
 
