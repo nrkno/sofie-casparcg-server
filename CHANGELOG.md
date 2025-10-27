@@ -1,3 +1,18 @@
+CasparCG 2.4.2 NRK
+==========================================
+
+This includes everything from upstream CasparCG v2.4.0 and some fixes from the v2.4.x branch (everything up to 2b9c040).
+
+## Changes relative to 2.4.0 NRK RC5
+
+### Core
+##### Fixes
+* Build: Use visual studio 2022
+
+### Producers
+##### Fixes
+* HTML: Log and hide error pages
+
 CasparCG 2.4.1 NRK
 ==========================================
 
