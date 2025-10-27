@@ -40,6 +40,8 @@
 #include <boost/logic/tribool.hpp>
 #include <common/filesystem.h>
 
+#include <chrono>
+
 #pragma warning(push, 1)
 
 extern "C" {
